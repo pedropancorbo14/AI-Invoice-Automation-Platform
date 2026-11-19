@@ -98,7 +98,7 @@ class FakeAnthropicApi
         return array_replace([
             'document_type' => 'invoice',
             'supplier' => ['name' => 'Fontanería García S.L.', 'tax_id' => 'B-12345674'],
-            'customer' => ['name' => 'Panadería La Espiga S.L.', 'tax_id' => 'B87654321'],
+            'customer' => ['name' => 'Panadería La Espiga S.L.', 'tax_id' => 'B87654323'],
             'invoice_number' => 'F-2026-001',
             'issue_date' => '2026-11-15',
             'due_date' => '2026-12-15',

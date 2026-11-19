@@ -7,6 +7,7 @@ use App\Enums\DocumentSource;
 use App\Enums\DocumentStatus;
 use App\Exceptions\InvalidDocumentTransition;
 use App\Models\Concerns\BelongsToAccount;
+use App\Support\Validation\Direction;
 use Database\Factories\DocumentFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -20,6 +21,7 @@ use InvalidArgumentException;
 /**
  * @property DocumentStatus $status
  * @property DocumentSource $source
+ * @property Direction|null $direction
  */
 class Document extends Model
 {
@@ -57,6 +59,7 @@ class Document extends Model
         return [
             'status' => DocumentStatus::class,
             'source' => DocumentSource::class,
+            'direction' => Direction::class,
             'size' => 'integer',
         ];
     }
@@ -171,6 +174,14 @@ class Document extends Model
     public function latestExtraction(): HasOne
     {
         return $this->hasOne(DocumentExtraction::class)->latestOfMany();
+    }
+
+    /**
+     * @return BelongsTo<Supplier, $this>
+     */
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
     }
 
     /**

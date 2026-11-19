@@ -46,11 +46,11 @@ storage/app/eval/dataset/
 ```json
 {
   "tags": ["pdf-digital", "irpf"],
-  "company": { "name": "Panadería La Espiga S.L.", "tax_id": "B87654321" },
+  "company": { "name": "Panadería La Espiga S.L.", "tax_id": "B87654323" },
   "expected": {
     "document_type": "invoice",
     "supplier": { "name": "Fontanería García S.L.", "tax_id": "B12345674" },
-    "customer": { "tax_id": "B87654321" },
+    "customer": { "tax_id": "B87654323" },
     "invoice_number": "F-2026-001",
     "issue_date": "2026-11-15",
     "due_date": null,
@@ -95,6 +95,24 @@ todos los campos clave bien, el coste medio y total, el tiempo medio y p95, y la
 lista de fallos (esperado frente a obtenido, y si la IA lo marcó como dudoso).
 El informe completo queda en `storage/app/eval/reports/` para comparar
 ejecuciones.
+
+### Qué harían las reglas (fase 4)
+
+La evaluación también pasa cada extracción por las reglas de validación sin
+estado (todas menos duplicados y proveedor nuevo, que dependen de la cuenta) y
+saca:
+
+- **Facturas que pasarían solas**: objetivo ≥ 70 %.
+- **Falsos aprobados**: facturas con algún dato clave mal que pasarían sin
+  revisión. **Tiene que ser 0**: es el único error que no ve nadie.
+- **Errores detectados**: datos mal que las reglas mandan a revisión (bien).
+- **Revisiones de más**: datos bien que van a revisión igualmente (molestan,
+  pero no son peligrosas).
+- **Reglas que más saltan**: dónde mirar para subir el % automático.
+
+Para que la regla de recibida o emitida cuente, pon `company` en el `.json` del
+caso. La antigüedad de las fechas no se tiene en cuenta aquí (el dataset puede
+tener facturas viejas).
 
 ## 4. Iterar
 

@@ -4,8 +4,15 @@ namespace App\Console\Commands;
 
 use App\Support\Evaluation\EvalCase;
 use App\Support\Evaluation\FieldComparator;
+use App\Support\Extraction\Confidence;
+use App\Support\Extraction\ExtractionResult;
 use App\Support\Extraction\InputPreparer;
 use App\Support\Extraction\LLMProvider;
+use App\Support\Extraction\TaxId;
+use App\Support\Validation\RuleFailure;
+use App\Support\Validation\ValidationInput;
+use App\Support\Validation\Validator;
+use Carbon\CarbonImmutable;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -21,13 +28,17 @@ use Throwable;
     {--limit= : Evaluar solo las N primeras}
     {--only=* : Evaluar solo estos casos (nombre sin extensión)}
     {--yes : No pedir confirmación (cada factura es una llamada de pago a la API)}')]
-#[Description('Mide la precisión por campo, el coste y el tiempo de la extracción con IA')]
+#[Description('Mide la precisión por campo, el coste y el tiempo de la extracción con IA, y qué harían las reglas')]
 class EvaluateExtraction extends Command
 {
     private const TARGET = 95.0;
 
-    public function handle(InputPreparer $preparer, FieldComparator $comparator): int
+    public function handle(InputPreparer $preparer, FieldComparator $comparator, Validator $validator): int
     {
+        // El dataset puede tener facturas antiguas: aquí no queremos que la
+        // regla de antigüedad las mande todas a revisión.
+        config(['invoices.validation.max_age_days' => 36500]);
+
         if ($this->option('model')) {
             config(['invoices.extraction.model' => $this->option('model')]);
         }
@@ -61,8 +72,8 @@ class EvaluateExtraction extends Command
         $provider = app(LLMProvider::class);
         $results = [];
 
-        $this->withProgressBar($cases, function (EvalCase $case) use ($provider, $preparer, $comparator, &$results) {
-            $results[] = $this->evaluate($case, $provider, $preparer, $comparator);
+        $this->withProgressBar($cases, function (EvalCase $case) use ($provider, $preparer, $comparator, $validator, &$results) {
+            $results[] = $this->evaluate($case, $provider, $preparer, $comparator, $validator);
         });
         $this->newLine(2);
 
@@ -97,7 +108,7 @@ class EvaluateExtraction extends Command
     /**
      * @return array<string, mixed>
      */
-    private function evaluate(EvalCase $case, LLMProvider $provider, InputPreparer $preparer, FieldComparator $comparator): array
+    private function evaluate(EvalCase $case, LLMProvider $provider, InputPreparer $preparer, FieldComparator $comparator, Validator $validator): array
     {
         try {
             $input = $preparer->prepare((string) File::get($case->path), $case->mimeType, $case->companyName, $case->companyTaxId);
@@ -106,11 +117,14 @@ class EvaluateExtraction extends Command
             return ['case' => $case->name, 'tags' => $case->tags, 'error' => class_basename($e).': '.Str::limit($e->getMessage(), 200)];
         }
 
+        $fields = $comparator->compare($case->expected, $result->data);
+
         return [
             'case' => $case->name,
             'tags' => $case->tags,
             'mode' => $input->mode->value,
-            'fields' => $comparator->compare($case->expected, $result->data),
+            'fields' => $fields,
+            'validation' => $this->validation($case, $result, $fields, $validator),
             'expected' => $case->expected,
             'actual' => $result->data,
             'doubtful' => $result->lowConfidenceFields(),
@@ -119,6 +133,47 @@ class EvaluateExtraction extends Command
             'output_tokens' => $result->outputTokens,
             'cost_usd' => $result->costUsd,
             'duration_ms' => $result->durationMs,
+        ];
+    }
+
+    /**
+     * Qué harían las reglas de la fase 4 con esta extracción. Solo las reglas
+     * sin estado: aquí no hay cuenta (duplicados ni proveedores conocidos).
+     *
+     * @param  array<string, bool>  $fields
+     * @return array{passed: bool, key_correct: bool, rules: list<string>, reason: string}|null
+     */
+    private function validation(EvalCase $case, ExtractionResult $result, array $fields, Validator $validator): ?array
+    {
+        $type = $result->documentType->value;
+        $decidedByType = in_array($type, [...(array) config('invoices.extraction.ignored_types'), ...(array) config('invoices.extraction.review_types')], true);
+
+        if ($decidedByType) {
+            return null;
+        }
+
+        $report = $validator->validate(new ValidationInput(
+            documentType: $result->documentType,
+            data: $result->data,
+            confidence: array_map(fn (Confidence $c) => $c->value, $result->confidence),
+            notes: $result->notes,
+            companyTaxId: TaxId::normalize($case->companyTaxId),
+            companyName: $case->companyName,
+            minConfidence: Confidence::High,
+            today: CarbonImmutable::now((string) config('invoices.validation.timezone'))->startOfDay(),
+        ));
+
+        // Sin empresa en el caso no se puede saber si es recibida o emitida: esa regla no cuenta.
+        $failures = array_values(array_filter(
+            $report->failures,
+            fn (RuleFailure $f) => $case->companyTaxId !== null || $f->rule !== 'direction',
+        ));
+
+        return [
+            'passed' => $failures === [],
+            'key_correct' => ! in_array(false, array_intersect_key($fields, array_flip(FieldComparator::KEY_FIELDS)), true),
+            'rules' => array_values(array_unique(array_map(fn (RuleFailure $f) => $f->rule, $failures))),
+            'reason' => implode(' ', array_map(fn (RuleFailure $f) => $f->message, $failures)),
         ];
     }
 
@@ -150,9 +205,23 @@ class EvaluateExtraction extends Command
         $durations = array_column($ok, 'duration_ms');
         sort($durations);
 
+        $validated = array_values(array_filter(array_column($ok, 'validation')));
+        $auto = array_filter($validated, fn ($v) => $v['passed']);
+        $falseAccepts = array_values(array_filter($ok, fn ($r) => ($r['validation']['passed'] ?? false) && ! $r['validation']['key_correct']));
+        $ruleCounts = array_count_values(array_merge([], ...array_column($validated, 'rules')));
+        arsort($ruleCounts);
+
         return [
             'model' => $model,
             'effort' => $effort,
+            'validation' => [
+                'cases' => count($validated),
+                'auto_rate' => $validated === [] ? 0.0 : round(count($auto) / count($validated) * 100, 1),
+                'false_accepts' => array_column($falseAccepts, 'case'),
+                'caught_errors' => count(array_filter($validated, fn ($v) => ! $v['passed'] && ! $v['key_correct'])),
+                'unnecessary_reviews' => count(array_filter($validated, fn ($v) => ! $v['passed'] && $v['key_correct'])),
+                'rules' => $ruleCounts,
+            ],
             'cases' => count($results),
             'errors' => count($results) - count($ok),
             'fields' => $fields,
@@ -165,7 +234,8 @@ class EvaluateExtraction extends Command
             'avg_output_tokens' => $ok === [] ? 0 : (int) round(array_sum(array_column($ok, 'output_tokens')) / count($ok)),
             'modes' => array_count_values(array_column($ok, 'mode')),
             'key_fields_below_target' => $keyBelowTarget,
-            'passed' => $keyBelowTarget === [] && count($ok) === count($results),
+            // Una factura con datos mal que pasaría sola es lo peor que puede pasar.
+            'passed' => $keyBelowTarget === [] && count($ok) === count($results) && $falseAccepts === [],
         ];
     }
 
@@ -192,6 +262,15 @@ class EvaluateExtraction extends Command
             ['Errores', (string) $report['errors']],
         ]);
 
+        $v = $report['validation'];
+        $this->table(['Reglas (fase 4)', 'Valor'], [
+            ['Facturas que pasarían solas', number_format($v['auto_rate'], 1, ',', '')." % de {$v['cases']} (objetivo ≥ 70 %)"],
+            ['Falsos aprobados (datos mal que pasarían)', $v['false_accepts'] === [] ? '0' : count($v['false_accepts']).': '.implode(', ', $v['false_accepts'])],
+            ['Errores detectados (a revisión)', (string) $v['caught_errors']],
+            ['Revisiones de más (datos bien)', (string) $v['unnecessary_reviews']],
+            ['Reglas que más saltan', implode(', ', array_map(fn ($rule, $n) => "{$rule}: {$n}", array_keys($v['rules']), $v['rules'])) ?: '—'],
+        ]);
+
         $failures = [];
         foreach ($results as $r) {
             if (isset($r['error'])) {
@@ -216,9 +295,19 @@ class EvaluateExtraction extends Command
             $this->table(['Caso', 'Campo', 'Esperado', 'Obtenido'], array_slice($failures, 0, 40));
         }
 
-        $report['passed']
+        $report['key_fields_below_target'] === [] && $report['errors'] === 0
             ? $this->info('✓ Los campos clave superan el 95 %.')
             : $this->error('✗ Por debajo del objetivo: '.implode(', ', $report['key_fields_below_target'] ?: ['hay errores técnicos']).'.');
+
+        $v['false_accepts'] === []
+            ? $this->info('✓ Ninguna factura con datos mal pasaría sola.')
+            : $this->error('✗ Hay facturas con datos mal que pasarían sin revisión: '.implode(', ', $v['false_accepts']).'.');
+
+        if ($v['cases'] > 0) {
+            $v['auto_rate'] >= 70
+                ? $this->info('✓ Al menos el 70 % pasaría sin intervención.')
+                : $this->warn('· Menos del 70 % pasaría sin intervención (mira qué reglas saltan).');
+        }
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Support\Evaluation;
 
+use App\Support\CompanyName;
 use App\Support\Extraction\ExtractionSchema;
 use App\Support\Extraction\TaxId;
 use Illuminate\Support\Str;
@@ -70,7 +71,7 @@ class FieldComparator
     {
         return match ($field) {
             'supplier_name' => $this->has($expected, 'supplier.name')
-                ? $this->sameName($this->value($field, $expected), $this->value($field, $actual)) : null,
+                ? CompanyName::similar($this->value($field, $expected), $this->value($field, $actual)) : null,
             'supplier_tax_id', 'customer_tax_id' => $this->has($expected, str_replace('_tax_id', '', $field).'.tax_id')
                 ? TaxId::normalize($this->value($field, $expected)) === TaxId::normalize($this->value($field, $actual)) : null,
             'invoice_number' => array_key_exists('invoice_number', $expected)
@@ -145,30 +146,5 @@ class FieldComparator
         $code = Str::upper((string) preg_replace('/[^A-Za-z0-9]/', '', (string) $value));
 
         return $code === '' ? null : $code;
-    }
-
-    /**
-     * Nombres: sin tildes, mayúsculas, signos ni forma jurídica (S.L., S.A...).
-     */
-    private function sameName(mixed $a, mixed $b): bool
-    {
-        $normalize = function (mixed $name): string {
-            $name = Str::upper(Str::ascii((string) $name));
-            $name = (string) preg_replace('/[^A-Z0-9 ]/', ' ', $name);
-            $name = (string) preg_replace('/\b(S ?L ?U?|S ?A ?U?|S ?L ?L|S ?C ?P?|C ?B|SOCIEDAD LIMITADA|SOCIEDAD ANONIMA)\s*$/', '', trim($name));
-
-            return trim((string) preg_replace('/\s+/', ' ', $name));
-        };
-
-        $a = $normalize($a);
-        $b = $normalize($b);
-
-        if ($a === '' || $b === '') {
-            return $a === $b;
-        }
-
-        similar_text($a, $b, $percent);
-
-        return $a === $b || $percent >= 85;
     }
 }

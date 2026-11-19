@@ -21,7 +21,7 @@ beforeEach(function () {
 
     // a: todo bien. b: el total anotado es otro. c: foto que en realidad no es factura.
     File::put("{$this->dataset}/a.pdf", Files::invoicePdf('A-1'));
-    File::put("{$this->dataset}/a.json", $truth($base, ['tags' => ['pdf-digital'], 'company' => ['name' => 'Panadería', 'tax_id' => 'B87654321']]));
+    File::put("{$this->dataset}/a.json", $truth($base, ['tags' => ['pdf-digital'], 'company' => ['name' => 'Panadería', 'tax_id' => 'B87654323']]));
     File::put("{$this->dataset}/b.pdf", Files::invoicePdf('B-1'));
     File::put("{$this->dataset}/b.json", $truth(['total' => 130] + $base));
     File::put("{$this->dataset}/c.jpg", Files::photo());
@@ -62,7 +62,7 @@ it('measures accuracy per field, cost and time', function () {
 it('passes the company context of each case to the model', function () {
     $this->artisan('invoices:eval', ['--dataset' => $this->dataset, '--only' => ['a'], '--yes' => true])->assertSuccessful();
 
-    expect($this->llm->inputs[0]->companyTaxId)->toBe('B87654321');
+    expect($this->llm->inputs[0]->companyTaxId)->toBe('B87654323');
 });
 
 it('passes when every key field reaches the target', function () {
@@ -111,4 +111,43 @@ it('explains an empty or missing dataset', function () {
         ->assertExitCode(2);
 
     File::deleteDirectory($empty);
+});
+
+it('measures what the phase 4 rules would do', function () {
+    // b: la IA lee 121 (coherente) pero la verdad es 130 → pasaría solo: falso aprobado.
+    $this->artisan('invoices:eval', ['--dataset' => $this->dataset, '--yes' => true])
+        ->expectsOutputToContain('Hay facturas con datos mal que pasarían sin revisión: b')
+        ->assertFailed();
+
+    $validation = latestReport()['summary']['validation'];
+
+    expect($validation['cases'])->toBe(3)
+        ->and($validation['false_accepts'])->toBe(['b'])
+        ->and($validation['auto_rate'])->toEqual(100)
+        ->and(latestReport()['results'][0]['validation'])->toMatchArray(['passed' => true, 'key_correct' => true]);
+});
+
+it('counts the errors the rules catch', function () {
+    // La IA se equivoca en el total y la aritmética lo detecta.
+    $this->llm->returns(FakeAnthropicApi::invoiceOutput(['total' => 130]));
+
+    $this->artisan('invoices:eval', ['--dataset' => $this->dataset, '--only' => ['a'], '--yes' => true])
+        ->expectsOutputToContain('Ninguna factura con datos mal pasaría sola')
+        ->assertFailed();
+
+    $validation = latestReport()['summary']['validation'];
+
+    expect($validation['caught_errors'])->toBe(1)
+        ->and($validation['auto_rate'])->toEqual(0)
+        ->and($validation['rules'])->toBe(['arithmetic' => 1])
+        ->and(latestReport()['results'][0]['validation']['reason'])->toBe('El total no cuadra: 130,00 ≠ 100,00 + 21,00.');
+});
+
+it('leaves documents decided by their type out of the rule metrics', function () {
+    $this->llm->returns(FakeAnthropicApi::invoiceOutput(['document_type' => 'quote']));
+
+    $this->artisan('invoices:eval', ['--dataset' => $this->dataset, '--only' => ['a'], '--yes' => true]);
+
+    expect(latestReport()['summary']['validation']['cases'])->toBe(0)
+        ->and(latestReport()['results'][0]['validation'])->toBeNull();
 });

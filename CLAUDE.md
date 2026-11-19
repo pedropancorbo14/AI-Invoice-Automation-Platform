@@ -34,7 +34,11 @@ excepción). Plan y estado: `docs/ROADMAP.md`. Visión general: `README.md`.
   `$document->transitionTo($status, $reason, $by)`. Añade transiciones solo en
   `DocumentStatus::allowedTransitions()` con su test.
 - **Auditoría inmutable.** `DocumentEvent` solo se inserta.
-- **La IA extrae, Laravel decide.** Las reglas de validación son PHP determinista.
+- **La IA extrae, Laravel decide.** Las reglas de validación son PHP
+  determinista: una clase por regla en `App\Support\Validation\Rules`, que
+  devuelve `RuleFailure` con un motivo legible en español. Las que consultan la
+  base de datos van en `Validator::CONTEXT_RULES`. Los importes se suman en
+  céntimos (`App\Support\Money`), nunca con floats.
 - **Entrada de documentos.** Todo correo entra por `ReceiveInboundEmail`
   (guarda el `.eml` y encola `ProcessInboundEmail`). Los adjuntos se aceptan
   por contenido (`FileType::detect`), nunca por extensión. Los duplicados se
