@@ -9,7 +9,7 @@ excepción*).
 email ──► cola ──► LLM (clasifica + extrae) ──► reglas PHP ──► revisión (si hace falta) ──► exportación
 ```
 
-> Estado: **fase 1 (base del proyecto)**. Ver [docs/ROADMAP.md](docs/ROADMAP.md).
+> Estado: **fase 1 completada**; siguiente: fase 2 (entrada por email). Ver [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Flujo de estados
 

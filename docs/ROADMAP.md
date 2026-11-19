@@ -5,7 +5,7 @@ cumplir su criterio.
 
 | Fase | Semanas | Resultado | Estado |
 |---|---|---|---|
-| 1. Base del proyecto | 1 | Laravel multi-tenant con colas, tests y CI | ✅ código listo (falta CI en verde en GitHub) |
+| 1. Base del proyecto | 1 | Laravel multi-tenant con colas, tests y CI | ✅ completada |
 | 2. Entrada por email | 2 | Los adjuntos llegan solos y se guardan | ⏳ |
 | 3. Extracción con IA | 3-4 | Datos estructurados con confianza por campo | ⏳ |
 | 4. Validación y reglas | 5 | El sistema decide solo qué está bien y qué no | ⏳ |
@@ -24,7 +24,7 @@ cumplir su criterio.
 - [x] Almacenamiento privado (local o S3) con rutas por cuenta
 - [x] `Document` con máquina de estados y auditoría `document_events`
 
-**Criterio de salida:** los tests de aislamiento entre cuentas pasan y la CI está en verde.
+**Criterio de salida:** los tests de aislamiento entre cuentas pasan y la CI está en verde. ✅
 
 ## Fase 2: Entrada automática por email
 
