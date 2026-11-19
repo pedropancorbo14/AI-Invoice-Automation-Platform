@@ -6,11 +6,11 @@ use App\Support\Extraction\InputPreparer;
 use Tests\Support\Files;
 
 it('sends the text of PDFs that have a text layer', function () {
-    $input = (new InputPreparer)->prepare(Files::invoicePdf(), 'application/pdf', 'Panadería', 'B87654321');
+    $input = (new InputPreparer)->prepare(Files::invoicePdf(), 'application/pdf', 'Panadería', 'B87654323');
 
     expect($input->mode)->toBe(InputMode::Text)
         ->and($input->content)->toContain('TOTAL FACTURA: 121,00 EUR')
-        ->and($input->companyTaxId)->toBe('B87654321');
+        ->and($input->companyTaxId)->toBe('B87654323');
 });
 
 it('sends the whole PDF when it has no usable text (scans)', function () {

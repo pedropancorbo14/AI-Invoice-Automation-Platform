@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AccountSettingsController;
 use App\Http\Controllers\Api\AuthTokenController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\DocumentController;
@@ -16,6 +17,8 @@ Route::post('auth/token', [AuthTokenController::class, 'store'])
 Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
     Route::delete('auth/token', [AuthTokenController::class, 'destroy'])->name('auth.logout');
     Route::get('me', MeController::class)->name('me');
+    Route::get('account/settings', [AccountSettingsController::class, 'show'])->name('account.settings.show');
+    Route::patch('account/settings', [AccountSettingsController::class, 'update'])->name('account.settings.update');
 
     Route::get('companies', [CompanyController::class, 'index'])->name('companies.index');
     Route::post('companies', [CompanyController::class, 'store'])->name('companies.store');

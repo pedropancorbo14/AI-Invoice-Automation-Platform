@@ -21,7 +21,7 @@ beforeEach(function () {
 
 function textInput(): ExtractionInput
 {
-    return new ExtractionInput(InputMode::Text, 'FACTURA F-2026-001 ...', 'text/plain', 'Panadería La Espiga S.L.', 'B87654321');
+    return new ExtractionInput(InputMode::Text, 'FACTURA F-2026-001 ...', 'text/plain', 'Panadería La Espiga S.L.', 'B87654323');
 }
 
 it('sends a structured-output request with fallbacks and a cached system prompt', function () {
@@ -39,7 +39,7 @@ it('sends a structured-output request with fallbacks and a cached system prompt'
         ->and($body['output_config']['format']['schema']['required'])->toContain('confidence', 'tax_breakdown', 'total')
         ->and($body['system'][0]['cache_control'])->toBe(['type' => 'ephemeral'])
         ->and($body['messages'][0]['content'][0]['text'])->toStartWith('Texto extraído del PDF:')
-        ->and($body['messages'][0]['content'][1]['text'])->toContain('CIF B87654321')
+        ->and($body['messages'][0]['content'][1]['text'])->toContain('CIF B87654323')
         ->and($body)->not->toHaveKey('thinking')
         ->and($this->api->lastRequestHeaders()['anthropic-beta'][0])->toContain('server-side-fallback-2026-07-01');
 });

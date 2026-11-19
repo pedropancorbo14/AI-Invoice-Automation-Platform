@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
 
         Company::factory()->for($account)->createMany([
             ['name' => 'Panadería La Espiga S.L.', 'tax_id' => 'B12345674'],
-            ['name' => 'Talleres Martínez S.L.', 'tax_id' => 'B87654321'],
+            ['name' => 'Talleres Martínez S.L.', 'tax_id' => 'B87654323'],
         ]);
     }
 }

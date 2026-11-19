@@ -9,7 +9,7 @@ excepción*).
 email ──► cola ──► LLM (clasifica + extrae) ──► reglas PHP ──► revisión (si hace falta) ──► exportación
 ```
 
-> Estado: **fases 1 y 2 completadas; fase 3 con el código listo**, pendiente del dataset real. Ver [docs/ROADMAP.md](docs/ROADMAP.md).
+> Estado: **fases 1 y 2 completadas; fases 3 y 4 con el código listo**, pendientes del dataset real. Ver [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Flujo de estados
 
@@ -113,14 +113,37 @@ RECEIVED → CLASSIFIED → EXTRACTED      factura, ticket o rectificativa
 - **Proveedor intercambiable:** interfaz `LLMProvider`; el modelo y el esfuerzo
   se cambian por `.env` (`EXTRACTION_MODEL`, `EXTRACTION_EFFORT`).
 
-Recibida o emitida no lo decide la IA: lo decidirá Laravel en la fase 4
-comparando los CIF con el de la empresa.
+Recibida o emitida no lo decide la IA: lo decide Laravel comparando los CIF
+con el de la empresa (ver Validación).
 
 ```bash
 php artisan invoices:extract --received    # extraer lo pendiente
 php artisan invoices:extract --failed      # reintentar lo fallido
 php artisan invoices:eval                  # medir precisión y coste (ver docs/evaluacion.md)
 ```
+
+## Validación (la IA extrae, Laravel decide)
+
+Tras la extracción, reglas deterministas en PHP deciden si la factura pasa
+sola (`VALIDATED`) o va a revisión (`NEEDS_REVIEW`). Cada regla que falla deja
+un **motivo legible**, y la lista completa queda en la auditoría.
+
+| Regla | Ejemplo de motivo |
+|---|---|
+| Aritmética: bases + IVA + recargo − retención = total (±0,02 €) | El total no cuadra: 121,00 ≠ 100,00 + 20,00. |
+| CIF, NIF y NIE: formato y dígito de control (NIF-IVA de la UE aceptados) | El CIF/NIF del proveedor no es válido: B12345675. |
+| Tipos de IVA de España (21, 10, 4, 0 %), cuota y recargo de equivalencia coherentes | El IVA al 21 % no cuadra: 100,00 × 21 % = 21,00, pero pone 20,00. |
+| Fechas: ni futuras, ni de hace más de un año (configurable), vencimiento ≥ emisión | La fecha de emisión es futura: 25/11/2026. |
+| Campos obligatorios y divisa | Falta el número de factura. / Factura en USD: revisa el cambio a euros. |
+| Recibida o emitida, según el CIF de la empresa | La factura no parece de Panadería La Espiga S.L.: … |
+| Confianza de la IA (umbral por cuenta: alta o media) | Dato dudoso en total: el total está tachado. |
+| Duplicado de negocio: mismo CIF + número + total | Posible duplicado del documento #12 (mismo proveedor, número y total). |
+| Proveedor nuevo: la primera factura de cada uno se revisa | Proveedor nuevo: Fontanería García S.L. (B12345674). … |
+
+**Memoria por proveedor** (`suppliers`, una por empresa cliente): nombre,
+IVA habitual, cuenta contable y categoría. Se rellena con cada factura validada
+(y con las correcciones humanas, en la fase 5). En cuanto un proveedor tiene una
+factura validada, las siguientes pasan solas si todo cuadra.
 
 ## Arrancar con Docker
 
@@ -158,6 +181,7 @@ Para leer un buzón real, rellena las variables `INBOX_*` de `.env` y pon
 | POST | `/api/auth/token` | Login: devuelve un token de Sanctum |
 | DELETE | `/api/auth/token` | Revoca el token actual |
 | GET | `/api/me` | Usuario, cuenta y dirección "sin asignar" |
+| GET / PATCH | `/api/account/settings` | Umbral de confianza de la cuenta (`high` o `medium`; cambiarlo, solo admin) |
 | GET | `/api/companies` | Clientes de la cuenta |
 | POST | `/api/companies` | Crear cliente (solo admin) |
 | GET | `/api/companies/{id}` | Ver cliente (incluye su `inbox_address`) |

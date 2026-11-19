@@ -30,6 +30,8 @@ use Throwable;
  *   RECEIVED → NEEDS_REVIEW                 (la IA lo rechaza o no se puede leer)
  *   RECEIVED → FAILED                       (error técnico, tras los reintentos)
  *
+ * Después de EXTRACTED encola la validación (ValidateDocument).
+ *
  * Los errores pasajeros (429, 5xx, red) se reintentan con espera creciente.
  */
 class ExtractDocument implements ShouldQueue
@@ -117,6 +119,10 @@ class ExtractDocument implements ShouldQueue
             ),
             default => $document->transitionTo(DocumentStatus::Extracted, payload: $this->summary($extraction)),
         };
+
+        if ($document->status === DocumentStatus::Extracted && config('invoices.validation.enabled')) {
+            ValidateDocument::dispatch($document->id)->afterCommit();
+        }
     }
 
     /**

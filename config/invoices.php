@@ -81,4 +81,31 @@ return [
         ],
     ],
 
+    /*
+    | Validación (fase 4): reglas deterministas que deciden si una factura
+    | pasa sola o va a revisión.
+    */
+    'validation' => [
+        'enabled' => (bool) env('VALIDATION_ENABLED', true),
+
+        // Tolerancia en céntimos para sumas y cuotas (±0,02 €).
+        'tolerance_cents' => (int) env('VALIDATION_TOLERANCE_CENTS', 2),
+
+        // Tipos de IVA admitidos (%).
+        'vat_rates' => [21, 10, 4, 0],
+
+        // Recargo de equivalencia admitido para cada tipo de IVA (%).
+        'surcharge_rates' => [
+            '21' => [5.2, 1.75],
+            '10' => [1.4],
+            '4' => [0.5],
+        ],
+
+        // Antigüedad máxima de la fecha de emisión (días).
+        'max_age_days' => (int) env('VALIDATION_MAX_AGE_DAYS', 365),
+
+        // Zona horaria para saber qué es "hoy".
+        'timezone' => 'Europe/Madrid',
+    ],
+
 ];

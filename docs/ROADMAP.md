@@ -8,7 +8,7 @@ cumplir su criterio.
 | 1. Base del proyecto | 1 | Laravel multi-tenant con colas, tests y CI | ✅ completada |
 | 2. Entrada por email | 2 | Los adjuntos llegan solos y se guardan | ✅ completada (falta probar con el buzón real) |
 | 3. Extracción con IA | 3-4 | Datos estructurados con confianza por campo | 🔧 código listo; falta el dataset y la evaluación real |
-| 4. Validación y reglas | 5 | El sistema decide solo qué está bien y qué no | ⏳ |
+| 4. Validación y reglas | 5 | El sistema decide solo qué está bien y qué no | 🔧 código listo; falta medirlo con el dataset |
 | 5. Revisión y avisos | 6 | Bandeja de pendientes y resumen por email | ⏳ |
 | 6. Exportación | 7 | CSV, Excel y Holded automáticos | ⏳ |
 | 7. Portfolio y demo | 8 | Repo, vídeo y métricas | ⏳ |
@@ -75,11 +75,29 @@ Formato e instrucciones: [evaluacion.md](evaluacion.md). Va en `storage/app/eval
 
 ## Fase 4: Validación y reglas
 
-- [ ] Comprobación aritmética (bases + IVA − retención = total, ±0,02 €)
-- [ ] Formato y dígito de control de CIF, NIF y NIE
-- [ ] Tipos de IVA válidos y base coherente con cada tipo
-- [ ] Fechas lógicas; recibida o emitida según el CIF de la `Company`
-- [ ] Duplicado de negocio (CIF + número + total) y memoria por proveedor (`Supplier`)
-- [ ] Umbral de confianza configurable por cuenta y motivo legible por regla
+- [x] Comprobación aritmética: bases + IVA + recargo − retención = total (±0,02 €), y retención coherente con su %
+- [x] Formato y dígito de control de CIF, NIF y NIE (NIF-IVA de la UE aceptados)
+- [x] Tipos de IVA válidos (21, 10, 4, 0 %), cuota coherente con la base y recargo de equivalencia válido
+- [x] Fechas lógicas: ni futuras ni de hace más de un año (configurable); vencimiento ≥ emisión
+- [x] Recibida o emitida comparando con el CIF de la `Company` (`documents.direction`)
+- [x] Duplicado de negocio: mismo CIF del proveedor + número + total (`documents.invoice_key`)
+- [x] Memoria por proveedor (`Supplier`): CIF, nombre normalizado, cuenta contable, IVA y categoría habituales
+- [x] Proveedor nuevo: la primera vez va a revisión; las siguientes salen solas si todo cuadra
+- [x] Umbral de confianza configurable por cuenta (`/api/account/settings`)
+- [x] Cada regla que falla guarda un motivo legible
+- [x] Tests unitarios por regla con casos límite
+- [x] Extra: `invoices:eval` mide qué harían las reglas (% automático, falsos aprobados, revisiones de más)
 
-**Criterio de salida:** con el dataset de la fase 3, las facturas con errores van a revisión y al menos el 70 % sale sola.
+**Criterio de salida:** con el dataset de la fase 3, todas las facturas con errores van a revisión
+(0 falsos aprobados) y al menos el 70 % salen sin intervención. ⏳ Pendiente del dataset.
+
+## Fase 5: Revisión por excepción y avisos
+
+- [ ] Panel con Vue: bandeja "Pendientes de revisar" por cliente y motivo
+- [ ] Vista de revisión: documento a la izquierda, datos a la derecha, dudosos resaltados
+- [ ] Acciones: corregir y aprobar, "no es factura", duplicado, adjuntar el PDF que faltaba
+- [ ] Al aprobar: actualizar la memoria del proveedor (`SupplierMemory::remember` con correcciones)
+- [ ] Auditoría de cada corrección (campo, antes, después, quién)
+- [ ] Resumen diario o semanal por email y panel de métricas
+
+**Criterio de salida:** revisar y aprobar una factura dudosa en menos de 30 segundos.

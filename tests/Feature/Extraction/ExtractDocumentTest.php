@@ -21,7 +21,7 @@ beforeEach(function () {
     Storage::fake('documents');
     config(['invoices.extraction.enabled' => true]);
 
-    $this->company = Company::factory()->create(['name' => 'Panadería La Espiga S.L.', 'tax_id' => 'B87654321']);
+    $this->company = Company::factory()->create(['name' => 'Panadería La Espiga S.L.', 'tax_id' => 'B87654323']);
 });
 
 function storeFile(string $contents, string $filename, string $mime): Document
@@ -69,7 +69,7 @@ it('tells the model which company the document belongs to', function () {
 
     expect($this->llm->inputs[0])
         ->companyName->toBe('Panadería La Espiga S.L.')
-        ->companyTaxId->toBe('B87654321');
+        ->companyTaxId->toBe('B87654323');
 });
 
 it('records doubtful fields in the audit trail', function () {

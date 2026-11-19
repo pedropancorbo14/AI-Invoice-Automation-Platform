@@ -13,7 +13,7 @@ it('scores every annotated field', function () {
     $expected = [
         'document_type' => 'invoice',
         'supplier' => ['name' => 'Fontaneria Garcia, SL', 'tax_id' => 'ESB12345674'],
-        'customer' => ['tax_id' => 'B-87654321'],
+        'customer' => ['tax_id' => 'B-87654323'],
         'invoice_number' => 'F 2026 001',
         'issue_date' => '2026-11-15',
         'due_date' => '2026-12-15',

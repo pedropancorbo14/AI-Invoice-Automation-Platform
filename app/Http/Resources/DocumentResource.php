@@ -23,6 +23,8 @@ class DocumentResource extends JsonResource
             'status' => $this->status->value,
             'status_label' => $this->status->label(),
             'status_reason' => $this->status_reason,
+            'direction' => $this->direction?->value,
+            'supplier_id' => $this->supplier_id,
             'source' => $this->source->value,
             'original_filename' => $this->original_filename,
             'mime_type' => $this->mime_type,
