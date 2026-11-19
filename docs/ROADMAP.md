@@ -10,7 +10,7 @@ cumplir su criterio.
 | 3. Extracción con IA | 3-4 | Datos estructurados con confianza por campo | 🔧 código listo; falta el dataset y la evaluación real |
 | 4. Validación y reglas | 5 | El sistema decide solo qué está bien y qué no | 🔧 código listo; falta medirlo con el dataset |
 | 5. Revisión y avisos | 6 | Bandeja de pendientes y resumen por email | ✅ completada |
-| 6. Exportación | 7 | CSV, Excel y Holded automáticos | ⏳ |
+| 6. Exportación | 7 | CSV, Excel y Holded automáticos | 🔧 código listo; falta la prueba con una cuenta real de Holded |
 | 7. Portfolio y demo | 8 | Repo, vídeo y métricas | ⏳ |
 | 8. Legal y validación | 8-9 | Hablado con gestorías y con las cuentas claras | ⏳ |
 | 9. Pilotos, cobro y crecimiento | 10+ | Primeros clientes de pago | ⏳ |
@@ -110,11 +110,22 @@ siguiente en ~1 s; el resumen se prueba con tests (contenido, frecuencia y que n
 
 ## Fase 6: Exportación automática
 
-- [ ] Interfaz `ExportTarget`
-- [ ] CSV o Excel por cliente y periodo (mes o trimestre), descargable y por email
-- [ ] Holded: API key cifrada por `Company`; cada factura validada se crea como gasto con su PDF
-- [ ] Exportación automática al pasar a `VALIDATED`, con reintentos; si falla, a revisión con el motivo
-- [ ] Nunca exportar dos veces (id externo de Holded)
-- [ ] Tests con la API de Holded simulada y una prueba real con una cuenta de prueba
+- [x] Interfaz `ExportTarget` para añadir destinos sin tocar el resto
+- [x] Libro de facturas en CSV o Excel por cliente y periodo (mes, trimestre o año), descargable y por email
+- [x] Holded: API key cifrada por `Company`; cada factura recibida validada se crea como gasto con su PDF
+- [x] Exportación automática al pasar a `VALIDATED`, con reintentos; si falla, a revisión con el motivo
+- [x] Nunca exportar dos veces: id de Holded guardado en `document_exports` y comprobado antes de enviar
+- [x] Tests con la API de Holded simulada (HTTP fake)
+- [ ] Prueba real con una cuenta de prueba de Holded: lista en [holded.md](holded.md)
 
 **Criterio de salida:** una factura reenviada por email aparece en Holded sola, de principio a fin.
+⏳ Pendiente: buzón IMAP real (fase 2), clave de Claude (fase 3) y cuenta de prueba de Holded.
+
+## Fase 7: Portfolio y demo
+
+- [ ] Revisar la cláusula de propiedad intelectual del contrato antes de publicar nada
+- [ ] README con el problema, GIF o vídeo, diagrama de arquitectura y decisiones técnicas
+- [x] Datos de ejemplo: cuenta demo con facturas ficticias (adelantado en la fase 5)
+- [ ] Publicar los resultados de la evaluación (precisión por campo, % automático, coste por factura)
+- [ ] Vídeo de 90 segundos y demo desplegada con HTTPS
+- [ ] Decidir si el repo es público

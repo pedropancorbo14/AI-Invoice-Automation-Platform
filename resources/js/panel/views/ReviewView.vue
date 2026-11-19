@@ -357,6 +357,15 @@ watch(() => props.id, () => load().catch((e) => (error.value = e.message)));
                 <p v-if="error" class="text-red-600">{{ error }}</p>
             </div>
 
+            <div v-if="doc.exports?.length" class="card p-4 text-sm">
+                <p v-for="e in doc.exports" :key="e.target">
+                    <strong class="capitalize">{{ e.target }}</strong>:
+                    {{ { exported: 'exportada', skipped: 'no aplica', failed: 'error', pending: 'pendiente' }[e.status] ?? e.status }}
+                    <span v-if="e.external_id" class="text-slate-500">({{ e.external_id }})</span>
+                    <span v-if="e.error" class="block text-xs text-slate-500">{{ e.error }}</span>
+                </p>
+            </div>
+
             <details class="card p-4 text-sm">
                 <summary class="cursor-pointer text-slate-500">Historial ({{ doc.events.length }})</summary>
                 <ol class="mt-3 space-y-1.5 text-xs text-slate-600 dark:text-slate-400">

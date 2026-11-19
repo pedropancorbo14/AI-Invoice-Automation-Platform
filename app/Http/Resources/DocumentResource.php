@@ -49,6 +49,13 @@ class DocumentResource extends JsonResource
             'sha256' => $this->sha256,
             'created_at' => $this->created_at?->toIso8601String(),
             'extraction' => new DocumentExtractionResource($this->whenLoaded('latestExtraction')),
+            'exports' => $this->whenLoaded('exports', fn () => $this->exports->map(fn ($export) => [
+                'target' => $export->target,
+                'status' => $export->status,
+                'external_id' => $export->external_id,
+                'error' => $export->error,
+                'exported_at' => $export->exported_at?->toIso8601String(),
+            ])),
             'events' => DocumentEventResource::collection($this->whenLoaded('events')),
         ];
     }

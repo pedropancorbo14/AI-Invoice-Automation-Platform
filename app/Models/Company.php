@@ -16,13 +16,21 @@ use Illuminate\Support\Str;
  * Cliente de una cuenta (la empresa cuyas facturas se procesan).
  */
 #[Fillable(['name', 'tax_id'])]
-#[Hidden(['inbox_token'])]
+#[Hidden(['inbox_token', 'holded_api_key'])]
 class Company extends Model
 {
     use BelongsToAccount;
 
     /** @use HasFactory<CompanyFactory> */
     use HasFactory;
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return ['holded_api_key' => 'encrypted'];
+    }
 
     protected static function booted(): void
     {

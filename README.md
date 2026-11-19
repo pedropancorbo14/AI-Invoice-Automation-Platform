@@ -9,7 +9,7 @@ excepción*).
 email ──► cola ──► LLM (clasifica + extrae) ──► reglas PHP ──► revisión (si hace falta) ──► exportación
 ```
 
-> Estado: **fases 1, 2 y 5 completadas; fases 3 y 4 con el código listo**, pendientes del dataset real. Ver [docs/ROADMAP.md](docs/ROADMAP.md).
+> Estado: **fases 1, 2 y 5 completadas; 3, 4 y 6 con el código listo**, pendientes del dataset real y de probar Holded con una cuenta real. Ver [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Flujo de estados
 
@@ -170,6 +170,25 @@ que usa la misma API con la sesión del navegador (Sanctum en modo SPA):
 Revisar y aprobar una factura dudosa lleva unos segundos: corregir el campo
 marcado y `Ctrl+Enter`.
 
+## Exportación
+
+```
+VALIDATED → EXPORTED       llegó a todos los destinos del cliente (p. ej. Holded)
+VALIDATED → NEEDS_REVIEW   un destino la rechaza (clave caducada, datos...)
+```
+
+- **Holded**: cada factura recibida y validada se crea como gasto con su PDF,
+  sola, en cuanto se valida. API key cifrada por cliente. Reintentos si Holded
+  no responde y nunca dos veces (`document_exports`). Detalles y lista de
+  verificación: [docs/holded.md](docs/holded.md).
+- **Libro de facturas (Excel o CSV)** por cliente y periodo (mes, trimestre o
+  año): una fila por tipo de IVA, con proveedor/cliente, CIF, bases, cuotas,
+  recargo, IRPF, total, cuenta contable y categoría. El CSV va con `;` y coma
+  decimal para el Excel en español. Se descarga o se envía por email desde el
+  panel (**Exportar**) o con `php artisan invoices:export-ledger`.
+- Nuevos destinos: implementar `App\Support\Export\ExportTarget` y añadirlo a
+  `config('invoices.export.targets')`.
+
 ## Arrancar con Docker
 
 Requisitos: Docker y Docker Compose.
@@ -223,6 +242,9 @@ Para leer un buzón real, rellena las variables `INBOX_*` de `.env` y pon
 | POST | `/api/documents/{id}/not-invoice` | Descartar: no es una factura |
 | POST | `/api/documents/{id}/duplicate` | Descartar: duplicado (`of_document_id`) |
 | POST | `/api/documents/{id}/file` | Adjuntar el fichero que faltaba y volver a extraer |
+| GET | `/api/companies/{id}/export?period=2026-T4&format=xlsx` | Libro de facturas del periodo (descarga) |
+| POST | `/api/companies/{id}/export/email` | Enviarlo por email (`period`, `format`, `email`) |
+| PUT / DELETE | `/api/companies/{id}/holded` | Conectar (`api_key`) o desconectar Holded (solo admin) |
 | GET | `/api/inbound-emails` | Correos recibidos (filtros: `status`, `company_id`) |
 | GET | `/api/inbound-emails/{id}` | Correo con sus documentos y el resumen de adjuntos |
 

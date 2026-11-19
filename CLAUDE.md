@@ -53,6 +53,13 @@ excepción). Plan y estado: `docs/ROADMAP.md`. Visión general: `README.md`.
   $codigos)` (los códigos están en `App\Support\Review\ReviewCode` y alimentan
   los filtros y las métricas). Las acciones humanas viven en `App\Actions\Review`
   y siempre pasan el usuario para la auditoría.
+- **Exportación.** Los destinos factura a factura implementan
+  `App\Support\Export\ExportTarget` y se registran en
+  `config('invoices.export.targets')`. Se exporta solo desde `ExportDocument`
+  (al pasar a `VALIDATED`) y nunca dos veces: `document_exports` es la fuente
+  de verdad. Las API keys de terceros van con el cast `encrypted` y ocultas.
+  Los tests de Holded usan `Http::fake()`; la exportación está desactivada por
+  defecto en tests (`EXPORT_ENABLED`).
 - **Panel.** Vue 3 en `resources/js/panel`, llama a la API con la sesión
   (Sanctum SPA). Las cuentas de importes en el navegador van en céntimos
   (`invoice.js`), igual que en PHP.

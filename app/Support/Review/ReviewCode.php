@@ -26,6 +26,8 @@ class ReviewCode
         'ai_refused' => 'La IA no lo procesó',
         'not_invoice' => 'Albarán o presupuesto',
         'no_data' => 'Sin datos extraídos',
+        // Exportación
+        'export_failed' => 'Error al exportar',
     ];
 
     public static function label(string $code): string

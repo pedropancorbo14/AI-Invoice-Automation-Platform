@@ -31,6 +31,7 @@
         <env name="INBOX_ENABLED" value="false"/>
         <env name="EXTRACTION_ENABLED" value="false"/>
         <env name="VALIDATION_ENABLED" value="false"/>
+        <env name="EXPORT_ENABLED" value="false"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
