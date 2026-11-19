@@ -4,9 +4,11 @@ use App\Http\Controllers\Api\AccountSettingsController;
 use App\Http\Controllers\Api\AuthTokenController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\DocumentController;
+use App\Http\Controllers\Api\DocumentReviewController;
 use App\Http\Controllers\Api\DocumentUploadController;
 use App\Http\Controllers\Api\InboundEmailController;
 use App\Http\Controllers\Api\MeController;
+use App\Http\Controllers\Api\MetricsController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('auth/token', [AuthTokenController::class, 'store'])
@@ -19,6 +21,7 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
     Route::get('me', MeController::class)->name('me');
     Route::get('account/settings', [AccountSettingsController::class, 'show'])->name('account.settings.show');
     Route::patch('account/settings', [AccountSettingsController::class, 'update'])->name('account.settings.update');
+    Route::get('metrics', MetricsController::class)->name('metrics');
 
     Route::get('companies', [CompanyController::class, 'index'])->name('companies.index');
     Route::post('companies', [CompanyController::class, 'store'])->name('companies.store');
@@ -29,6 +32,12 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
     Route::get('documents/{document}', [DocumentController::class, 'show'])->name('documents.show');
     Route::get('documents/{document}/file', [DocumentController::class, 'file'])->name('documents.file');
     Route::put('documents/{document}/company', [DocumentController::class, 'assign'])->name('documents.assign');
+
+    // Revisión por excepción
+    Route::post('documents/{document}/approve', [DocumentReviewController::class, 'approve'])->name('documents.approve');
+    Route::post('documents/{document}/not-invoice', [DocumentReviewController::class, 'notInvoice'])->name('documents.not-invoice');
+    Route::post('documents/{document}/duplicate', [DocumentReviewController::class, 'duplicate'])->name('documents.duplicate');
+    Route::post('documents/{document}/file', [DocumentReviewController::class, 'replaceFile'])->name('documents.replace-file');
 
     Route::get('inbound-emails', [InboundEmailController::class, 'index'])->name('inbound-emails.index');
     Route::get('inbound-emails/{inboundEmail}', [InboundEmailController::class, 'show'])->name('inbound-emails.show');

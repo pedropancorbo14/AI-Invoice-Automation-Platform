@@ -9,7 +9,7 @@ cumplir su criterio.
 | 2. Entrada por email | 2 | Los adjuntos llegan solos y se guardan | ✅ completada (falta probar con el buzón real) |
 | 3. Extracción con IA | 3-4 | Datos estructurados con confianza por campo | 🔧 código listo; falta el dataset y la evaluación real |
 | 4. Validación y reglas | 5 | El sistema decide solo qué está bien y qué no | 🔧 código listo; falta medirlo con el dataset |
-| 5. Revisión y avisos | 6 | Bandeja de pendientes y resumen por email | ⏳ |
+| 5. Revisión y avisos | 6 | Bandeja de pendientes y resumen por email | ✅ completada |
 | 6. Exportación | 7 | CSV, Excel y Holded automáticos | ⏳ |
 | 7. Portfolio y demo | 8 | Repo, vídeo y métricas | ⏳ |
 | 8. Legal y validación | 8-9 | Hablado con gestorías y con las cuentas claras | ⏳ |
@@ -93,11 +93,28 @@ Formato e instrucciones: [evaluacion.md](evaluacion.md). Va en `storage/app/eval
 
 ## Fase 5: Revisión por excepción y avisos
 
-- [ ] Panel con Vue: bandeja "Pendientes de revisar" por cliente y motivo
-- [ ] Vista de revisión: documento a la izquierda, datos a la derecha, dudosos resaltados
-- [ ] Acciones: corregir y aprobar, "no es factura", duplicado, adjuntar el PDF que faltaba
-- [ ] Al aprobar: actualizar la memoria del proveedor (`SupplierMemory::remember` con correcciones)
-- [ ] Auditoría de cada corrección (campo, antes, después, quién)
-- [ ] Resumen diario o semanal por email y panel de métricas
+- [x] Panel con Vue: bandeja de "Pendientes de revisar" filtrada por cliente y por motivo
+- [x] Vista de revisión: documento a la izquierda, datos a la derecha, dudosos resaltados y motivo arriba
+- [x] Acciones: corregir y aprobar, "no es factura", duplicado y adjuntar el PDF que faltaba
+- [x] Al aprobar: actualizar la memoria del proveedor (cuenta contable y categoría) y pasar a `VALIDATED`
+- [x] Auditoría de cada corrección: campo, antes, después y quién
+- [x] Resumen por email diario o semanal (configurable); no se manda si no hay pendientes
+- [x] Panel de métricas: facturas procesadas, % automático, motivos de revisión y coste de IA del mes
+- [x] Extra: atajos de teclado, salto automático a la siguiente, comprobación del total en vivo
+      y aviso si al aprobar algo sigue sin cuadrar
+- [x] Extra: cuenta demo con facturas ficticias (adelanta parte de la fase 7)
 
-**Criterio de salida:** revisar y aprobar una factura dudosa en menos de 30 segundos.
+**Criterio de salida:** revisar y aprobar una factura dudosa en menos de 30 segundos y el resumen
+por email llega bien. ✅ Prueba en navegador: corregir el total + `Ctrl+Enter` aprueba y carga la
+siguiente en ~1 s; el resumen se prueba con tests (contenido, frecuencia y que no se manda sin pendientes).
+
+## Fase 6: Exportación automática
+
+- [ ] Interfaz `ExportTarget`
+- [ ] CSV o Excel por cliente y periodo (mes o trimestre), descargable y por email
+- [ ] Holded: API key cifrada por `Company`; cada factura validada se crea como gasto con su PDF
+- [ ] Exportación automática al pasar a `VALIDATED`, con reintentos; si falla, a revisión con el motivo
+- [ ] Nunca exportar dos veces (id externo de Holded)
+- [ ] Tests con la API de Holded simulada y una prueba real con una cuenta de prueba
+
+**Criterio de salida:** una factura reenviada por email aparece en Holded sola, de principio a fin.

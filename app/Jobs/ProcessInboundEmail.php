@@ -195,9 +195,9 @@ class ProcessInboundEmail implements ShouldQueue
             );
 
         if ($document->status === DocumentStatus::Received) {
-            $document->transitionTo(
-                DocumentStatus::NeedsReview,
+            $document->sendToReview(
                 'Factura por enlace: el correo no trae adjunto, solo enlaces de descarga.',
+                ['link_invoice'],
                 payload: ['links' => $downloadLinks],
             );
         }

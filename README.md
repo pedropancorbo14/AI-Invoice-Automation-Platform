@@ -9,7 +9,7 @@ excepción*).
 email ──► cola ──► LLM (clasifica + extrae) ──► reglas PHP ──► revisión (si hace falta) ──► exportación
 ```
 
-> Estado: **fases 1 y 2 completadas; fases 3 y 4 con el código listo**, pendientes del dataset real. Ver [docs/ROADMAP.md](docs/ROADMAP.md).
+> Estado: **fases 1, 2 y 5 completadas; fases 3 y 4 con el código listo**, pendientes del dataset real. Ver [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Flujo de estados
 
@@ -145,6 +145,31 @@ IVA habitual, cuenta contable y categoría. Se rellena con cada factura validada
 (y con las correcciones humanas, en la fase 5). En cuanto un proveedor tiene una
 factura validada, las siguientes pasan solas si todo cuadra.
 
+## Revisión por excepción (panel)
+
+El cliente solo entra cuando hay un problema. Panel en `/panel` (Vue 3 + Vite),
+que usa la misma API con la sesión del navegador (Sanctum en modo SPA):
+
+- **Pendientes de revisar**: por orden de llegada, filtrable por cliente y por
+  motivo (el total no cuadra, proveedor nuevo, datos dudosos...).
+- **Revisión**: el documento a la izquierda y los datos a la derecha, con los
+  campos dudosos resaltados, la nota de la IA y la comprobación del total en
+  vivo. El cursor empieza en el primer dato dudoso.
+- **Acciones**: corregir y aprobar (`Ctrl+Enter`), no es factura (`Alt+N`),
+  duplicado (`Alt+D`) y adjuntar el PDF de una factura por enlace. Al terminar
+  salta a la siguiente.
+- Al aprobar se vuelven a pasar las reglas: si algo sigue sin cuadrar, avisa y
+  pide confirmación. Cada campo corregido queda en la auditoría (antes, después,
+  quién) y la memoria del proveedor guarda la cuenta contable y la categoría.
+- **Métricas** del mes: facturas recibidas, % validado sin intervención,
+  pendientes, motivos de revisión más frecuentes y coste de IA.
+- **Resumen por email** (diario o semanal, configurable por cuenta): "Se
+  procesaron X facturas; Y necesitan revisión", con enlace directo. Si no hay
+  pendientes no se manda nada.
+
+Revisar y aprobar una factura dudosa lleva unos segundos: corregir el campo
+marcado y `Ctrl+Enter`.
+
 ## Arrancar con Docker
 
 Requisitos: Docker y Docker Compose.
@@ -155,6 +180,7 @@ docker compose up -d --build
 docker compose exec app composer install
 docker compose exec app php artisan key:generate
 docker compose exec app php artisan migrate --seed
+docker compose run --rm assets        # compila el panel (o: npm install && npm run build)
 ```
 
 - App: http://localhost:8080 (subida manual en `/subir`)
@@ -162,6 +188,8 @@ docker compose exec app php artisan migrate --seed
 - Mailpit (emails salientes): http://localhost:8025
 
 Cuenta demo: `admin@demo.test` / `password` (admin) y `revisor@demo.test` / `password`.
+Trae facturas ficticias: unas validadas solas y otras pendientes de revisar por
+motivos distintos, para probar el panel sin configurar nada.
 
 ```bash
 # Obtener un token y listar documentos
@@ -181,15 +209,20 @@ Para leer un buzón real, rellena las variables `INBOX_*` de `.env` y pon
 | POST | `/api/auth/token` | Login: devuelve un token de Sanctum |
 | DELETE | `/api/auth/token` | Revoca el token actual |
 | GET | `/api/me` | Usuario, cuenta y dirección "sin asignar" |
-| GET / PATCH | `/api/account/settings` | Umbral de confianza de la cuenta (`high` o `medium`; cambiarlo, solo admin) |
+| GET / PATCH | `/api/account/settings` | Umbral de confianza (`high`/`medium`) y resumen por email (`daily`/`weekly`/`off`); cambiarlo, solo admin |
+| GET | `/api/metrics?month=AAAA-MM` | Métricas del mes |
 | GET | `/api/companies` | Clientes de la cuenta |
 | POST | `/api/companies` | Crear cliente (solo admin) |
 | GET | `/api/companies/{id}` | Ver cliente (incluye su `inbox_address`) |
-| GET | `/api/documents` | Documentos (filtros: `status`, `company_id`, `unassigned`) |
+| GET | `/api/documents` | Documentos (filtros: `status`, `company_id`, `unassigned`, `review_code`) |
 | POST | `/api/documents` | Subida manual (`files[]`, `company_id` opcional) |
 | GET | `/api/documents/{id}` | Documento con su auditoría y su última extracción |
 | GET | `/api/documents/{id}/file` | Descarga del original (nunca es público) |
 | PUT | `/api/documents/{id}/company` | Asignar a un cliente (desde "sin asignar") |
+| POST | `/api/documents/{id}/approve` | Corregir y aprobar (`data`, `supplier`, `force`) |
+| POST | `/api/documents/{id}/not-invoice` | Descartar: no es una factura |
+| POST | `/api/documents/{id}/duplicate` | Descartar: duplicado (`of_document_id`) |
+| POST | `/api/documents/{id}/file` | Adjuntar el fichero que faltaba y volver a extraer |
 | GET | `/api/inbound-emails` | Correos recibidos (filtros: `status`, `company_id`) |
 | GET | `/api/inbound-emails/{id}` | Correo con sus documentos y el resumen de adjuntos |
 
@@ -200,6 +233,8 @@ composer lint      # Pint (estilo)
 composer analyse   # Larastan nivel 8
 composer test      # Pest
 composer check     # las tres
+npm test           # Vitest (lógica del panel)
+npm run build      # compila el panel
 ```
 
 Los tests usan SQLite en memoria en local. La CI (GitHub Actions) los ejecuta

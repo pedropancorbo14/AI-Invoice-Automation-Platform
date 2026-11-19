@@ -89,6 +89,21 @@ jobs:
           DB_CONNECTION: pgsql
           DB_DATABASE: invoices_test
 
+  frontend:
+    name: Panel (Vitest + build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+
   docker:
     name: Imagen Docker
     runs-on: ubuntu-latest

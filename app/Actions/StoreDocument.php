@@ -42,17 +42,7 @@ class StoreDocument
             throw new InvalidArgumentException('El correo no pertenece a la cuenta.');
         }
 
-        $disk = (string) config('invoices.documents_disk');
-        $extension = Str::lower(pathinfo($originalFilename, PATHINFO_EXTENSION)) ?: 'bin';
-        $path = sprintf(
-            'accounts/%d/%s/%s.%s',
-            $account->getKey(),
-            now()->format('Y/m'),
-            Str::lower((string) Str::ulid()),
-            $extension,
-        );
-
-        Storage::disk($disk)->put($path, $contents);
+        [$disk, $path] = self::putFile($account, $contents, $originalFilename);
 
         try {
             return DB::transaction(function () use ($account, $company, $inboundEmail, $queueExtraction, $source, $disk, $path, $originalFilename, $mimeType, $contents): Document {
@@ -81,5 +71,27 @@ class StoreDocument
 
             throw $e;
         }
+    }
+
+    /**
+     * Guarda el fichero en el disco privado, en la carpeta de la cuenta.
+     *
+     * @return array{0: string, 1: string} [disco, ruta]
+     */
+    public static function putFile(Account $account, string $contents, string $originalFilename): array
+    {
+        $disk = (string) config('invoices.documents_disk');
+        $extension = Str::lower(pathinfo($originalFilename, PATHINFO_EXTENSION)) ?: 'bin';
+        $path = sprintf(
+            'accounts/%d/%s/%s.%s',
+            $account->getKey(),
+            now()->format('Y/m'),
+            Str::lower((string) Str::ulid()),
+            $extension,
+        );
+
+        Storage::disk($disk)->put($path, $contents);
+
+        return [$disk, $path];
     }
 }

@@ -29,7 +29,7 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('documents.upload.show'));
+        return redirect()->intended(route('panel'));
     }
 
     public function destroy(Request $request): RedirectResponse

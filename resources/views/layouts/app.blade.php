@@ -44,7 +44,7 @@
 <body>
     @auth
         <header>
-            <strong>{{ config('app.name') }}</strong>
+            <a href="{{ route('panel') }}" style="color: inherit; text-decoration: none;"><strong>{{ config('app.name') }}</strong> · Panel</a>
             <form method="post" action="{{ route('logout') }}">
                 @csrf
                 <button type="submit" class="link">Salir</button>

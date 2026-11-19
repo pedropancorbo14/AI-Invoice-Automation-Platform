@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // El panel (Vue) usa la API con la cookie de sesión (Sanctum en modo SPA).
+        $middleware->statefulApi();
+
         $middleware->alias([
             'tenant' => SetCurrentAccount::class,
         ]);
