@@ -95,6 +95,7 @@ class ClaudeProvider implements LLMProvider
                 mediaType: MediaType::tryFrom($input->mediaType)
                     ?? throw new ExtractionFailed("Tipo de imagen no admitido por la API: {$input->mediaType}."),
             )),
+            InputMode::Manual => throw new ExtractionFailed('Los datos manuales no se mandan a la IA.'),
         };
 
         return [$document, BetaTextBlockParam::with(text: ExtractionSchema::userPrompt($input))];

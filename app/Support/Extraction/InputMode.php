@@ -15,4 +15,7 @@ enum InputMode: string
 
     /** Una foto (JPG/PNG; HEIC se convierte antes). */
     case Image = 'image';
+
+    /** Datos introducidos o corregidos por una persona al revisar. */
+    case Manual = 'manual';
 }

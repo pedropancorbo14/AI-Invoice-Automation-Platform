@@ -9,6 +9,7 @@ excepción). Plan y estado: `docs/ROADMAP.md`. Visión general: `README.md`.
 - `composer lint`: Pint (`vendor/bin/pint` para arreglar)
 - `composer analyse`: Larastan nivel 8; no añadas baseline ni `@phpstan-ignore`
 - `composer check`: las tres; debe pasar antes de cada commit
+- `npm test` (Vitest) y `npm run build`: el panel en `resources/js/panel`
 
 ## Ramas
 
@@ -48,6 +49,13 @@ excepción). Plan y estado: `docs/ROADMAP.md`. Visión general: `README.md`.
   confianza; las decisiones (ignorar, revisar, validar) las toma PHP. Los
   importes se guardan como texto con 2 decimales. Cualquier cambio en el prompt
   o en el esquema se mide con `invoices:eval` antes de darlo por bueno.
+- **Revisión.** Para mandar algo a revisión usa `$document->sendToReview($motivo,
+  $codigos)` (los códigos están en `App\Support\Review\ReviewCode` y alimentan
+  los filtros y las métricas). Las acciones humanas viven en `App\Actions\Review`
+  y siempre pasan el usuario para la auditoría.
+- **Panel.** Vue 3 en `resources/js/panel`, llama a la API con la sesión
+  (Sanctum SPA). Las cuentas de importes en el navegador van en céntimos
+  (`invoice.js`), igual que en PHP.
 - **Ficheros privados.** Se guardan con `StoreDocument` en el disco
   `config('invoices.documents_disk')` y se sirven solo tras autorización.
 

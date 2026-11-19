@@ -66,11 +66,11 @@ class ExtractDocument implements ShouldQueue
                 );
                 $result = $provider->extract($input);
             } catch (UnsupportedInput $e) {
-                $document->transitionTo(DocumentStatus::NeedsReview, $e->getMessage());
+                $document->sendToReview($e->getMessage(), ['unreadable']);
 
                 return;
             } catch (ExtractionRefused $e) {
-                $document->transitionTo(DocumentStatus::NeedsReview, 'La IA no ha podido procesarlo: '.$e->getMessage());
+                $document->sendToReview('La IA no ha podido procesarlo: '.$e->getMessage(), ['ai_refused']);
 
                 return;
             } catch (ExtractionFailed $e) {
@@ -113,9 +113,9 @@ class ExtractDocument implements ShouldQueue
                 DocumentStatus::Ignored,
                 "No es una factura: parece {$type->label()}.",
             ),
-            in_array($type->value, (array) config('invoices.extraction.review_types'), true) => $document->transitionTo(
-                DocumentStatus::NeedsReview,
+            in_array($type->value, (array) config('invoices.extraction.review_types'), true) => $document->sendToReview(
                 'Parece '.$this->withArticle($type).', no una factura.',
+                ['not_invoice'],
             ),
             default => $document->transitionTo(DocumentStatus::Extracted, payload: $this->summary($extraction)),
         };

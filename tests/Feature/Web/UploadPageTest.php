@@ -15,7 +15,7 @@ it('logs in with email and password', function () {
     User::factory()->create(['email' => 'ana@gestoria.test']);
 
     $this->post('/login', ['email' => 'ana@gestoria.test', 'password' => 'password'])
-        ->assertRedirect('/subir');
+        ->assertRedirect('/panel');
 
     $this->assertAuthenticated();
 });

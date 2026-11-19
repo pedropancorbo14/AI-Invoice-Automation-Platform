@@ -44,7 +44,7 @@ class ValidateDocument implements ShouldQueue
         $extraction = $document->latestExtraction;
 
         if ($extraction === null) {
-            $document->transitionTo(DocumentStatus::NeedsReview, 'No hay datos extraídos que validar.');
+            $document->sendToReview('No hay datos extraídos que validar.', ['no_data']);
 
             return;
         }
@@ -81,7 +81,7 @@ class ValidateDocument implements ShouldQueue
         $document->save();
 
         if (! $report->passed()) {
-            $document->transitionTo(DocumentStatus::NeedsReview, $report->reason(), payload: [
+            $document->sendToReview($report->reason(), $report->rules(), payload: [
                 'rules' => $report->rules(),
                 'failures' => array_map(fn (RuleFailure $f) => $f->toArray(), $report->failures),
             ]);

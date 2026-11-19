@@ -39,6 +39,15 @@ services:
     command: php artisan schedule:work
     restart: unless-stopped
 
+  # Compila el panel (Vue): docker compose run --rm assets
+  assets:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: sh -c "npm ci && npm run build"
+    profiles: [tools]
+
   postgres:
     image: postgres:17-alpine
     environment:

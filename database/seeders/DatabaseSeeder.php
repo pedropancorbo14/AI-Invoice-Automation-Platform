@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
     /**
      * Cuenta demo para probar el proyecto sin configurar nada.
      * Usuarios: admin@demo.test y revisor@demo.test (contraseña: password).
+     * Incluye facturas de ejemplo para probar el panel (DemoInvoicesSeeder).
      */
     public function run(): void
     {
@@ -28,8 +29,11 @@ class DatabaseSeeder extends Seeder
         ]);
 
         Company::factory()->for($account)->createMany([
-            ['name' => 'Panadería La Espiga S.L.', 'tax_id' => 'B12345674'],
-            ['name' => 'Talleres Martínez S.L.', 'tax_id' => 'B87654323'],
+            ['name' => 'Panadería La Espiga S.L.', 'tax_id' => 'B34567891'],
+            ['name' => 'Talleres Martínez S.L.', 'tax_id' => 'B45678919'],
         ]);
+
+        // Facturas ficticias: unas validadas solas y otras pendientes de revisar.
+        $this->call(DemoInvoicesSeeder::class);
     }
 }

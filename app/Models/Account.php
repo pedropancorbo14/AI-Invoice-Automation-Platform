@@ -14,12 +14,20 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Tenant: la gestoría o empresa que contrata el servicio.
  */
-#[Fillable(['name', 'min_confidence'])]
+#[Fillable(['name', 'min_confidence', 'digest_frequency'])]
 #[Hidden(['inbox_token'])]
 class Account extends Model
 {
     /** @use HasFactory<AccountFactory> */
     use HasFactory;
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return ['last_digest_sent_at' => 'datetime'];
+    }
 
     protected static function booted(): void
     {

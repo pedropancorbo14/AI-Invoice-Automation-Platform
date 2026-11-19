@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Account;
 use App\Models\User;
 use App\Support\Extraction\Confidence;
 use Illuminate\Container\Attributes\CurrentUser;
@@ -21,7 +22,7 @@ class AccountSettingsController extends Controller
         $account = $user->account()->firstOrFail();
         Gate::authorize('view', $account);
 
-        return $this->json($account->min_confidence);
+        return $this->json($account);
     }
 
     public function update(Request $request, #[CurrentUser] User $user): JsonResponse
@@ -30,20 +31,23 @@ class AccountSettingsController extends Controller
         Gate::authorize('update', $account);
 
         $data = $request->validate([
-            'min_confidence' => ['required', Rule::in([Confidence::High->value, Confidence::Medium->value])],
+            'min_confidence' => ['sometimes', Rule::in([Confidence::High->value, Confidence::Medium->value])],
+            'digest_frequency' => ['sometimes', Rule::in(['daily', 'weekly', 'off'])],
         ]);
 
         $account->update($data);
 
-        return $this->json($account->min_confidence);
+        return $this->json($account);
     }
 
-    private function json(string $minConfidence): JsonResponse
+    private function json(Account $account): JsonResponse
     {
         return response()->json(['data' => [
             // high: un campo clave con confianza media ya va a revisión (lo más prudente).
             // medium: solo va a revisión con confianza baja.
-            'min_confidence' => $minConfidence,
+            'min_confidence' => $account->min_confidence,
+            // Resumen por email de pendientes: daily, weekly (lunes) u off.
+            'digest_frequency' => $account->digest_frequency,
         ]]);
     }
 }

@@ -22,6 +22,7 @@ use InvalidArgumentException;
  * @property DocumentStatus $status
  * @property DocumentSource $source
  * @property Direction|null $direction
+ * @property list<string>|null $review_codes
  */
 class Document extends Model
 {
@@ -60,6 +61,7 @@ class Document extends Model
             'status' => DocumentStatus::class,
             'source' => DocumentSource::class,
             'direction' => Direction::class,
+            'review_codes' => 'array',
             'size' => 'integer',
         ];
     }
@@ -104,6 +106,12 @@ class Document extends Model
 
             $this->status = $to;
             $this->status_reason = $reason;
+
+            // Los motivos de revisión solo tienen sentido mientras está en revisión.
+            if ($to !== DocumentStatus::NeedsReview) {
+                $this->review_codes = null;
+            }
+
             $this->save();
 
             $this->recordEvent(
@@ -115,6 +123,19 @@ class Document extends Model
                 payload: $payload,
             );
         });
+    }
+
+    /**
+     * Manda el documento a revisión con el motivo legible y los códigos que
+     * permiten filtrar la bandeja.
+     *
+     * @param  list<string>  $codes  Ver App\Support\Review\ReviewCode.
+     * @param  array<string, mixed>  $payload
+     */
+    public function sendToReview(string $reason, array $codes, ?User $by = null, array $payload = []): void
+    {
+        $this->review_codes = array_values(array_unique($codes));
+        $this->transitionTo(DocumentStatus::NeedsReview, $reason, $by, ['review_codes' => $this->review_codes] + $payload);
     }
 
     /**
