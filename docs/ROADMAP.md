@@ -11,7 +11,7 @@ cumplir su criterio.
 | 4. Validación y reglas | 5 | El sistema decide solo qué está bien y qué no | 🔧 código listo; falta medirlo con el dataset |
 | 5. Revisión y avisos | 6 | Bandeja de pendientes y resumen por email | ✅ completada |
 | 6. Exportación | 7 | CSV, Excel y Holded automáticos | 🔧 código listo; falta la prueba con una cuenta real de Holded |
-| 7. Portfolio y demo | 8 | Repo, vídeo y métricas | ⏳ |
+| 7. Portfolio y demo | 8 | Repo, vídeo y métricas | 🔧 lo técnico listo; faltan el vídeo, el despliegue y los resultados reales |
 | 8. Legal y validación | 8-9 | Hablado con gestorías y con las cuentas claras | ⏳ |
 | 9. Pilotos, cobro y crecimiento | 10+ | Primeros clientes de pago | ⏳ |
 
@@ -123,9 +123,28 @@ siguiente en ~1 s; el resumen se prueba con tests (contenido, frecuencia y que n
 
 ## Fase 7: Portfolio y demo
 
-- [ ] Revisar la cláusula de propiedad intelectual del contrato antes de publicar nada
-- [ ] README con el problema, GIF o vídeo, diagrama de arquitectura y decisiones técnicas
-- [x] Datos de ejemplo: cuenta demo con facturas ficticias (adelantado en la fase 5)
-- [ ] Publicar los resultados de la evaluación (precisión por campo, % automático, coste por factura)
-- [ ] Vídeo de 90 segundos y demo desplegada con HTTPS
-- [ ] Decidir si el repo es público
+- [ ] Revisar la cláusula de propiedad intelectual del contrato antes de publicar nada (tú)
+- [x] README con el problema, GIF, diagramas de arquitectura y de estados, decisiones técnicas
+      y cómo arrancarlo con Docker (detalle técnico en [arquitectura.md](arquitectura.md))
+- [x] Datos de ejemplo: cuenta demo con facturas ficticias y modo demo (`DEMO_MODE`):
+      credenciales en el login, sin integraciones reales y reinicio cada noche (`demo:reset`)
+- [ ] Publicar los resultados de la evaluación: la tabla del README espera el dataset real
+- [ ] Vídeo de 90 segundos: guion en [guion-video.md](guion-video.md)
+- [x] Despliegue preparado: imagen de producción, Caddy con HTTPS automático y guía
+      ([despliegue.md](despliegue.md))
+- [ ] Desplegar la demo en un servidor (tú: servidor y dominio)
+- [ ] Decidir si el repo es público o se enseña solo la demo y el vídeo (tú)
+
+**Criterio de salida:** puedes enseñar el proyecto completo en 2 minutos desde el móvil.
+El panel funciona en móvil y la demo entra con un botón; falta desplegarla.
+
+## Fase 8: Legal y validación con gestorías
+
+Fuera del código: contrato y exclusividad, alta como autónomo, RGPD (encargado
+de tratamiento, servidores en la UE, política de borrado), condiciones del
+proveedor del LLM, y enseñar la demo a 10-15 gestorías para fijar el precio.
+
+## Fase 9: Pilotos, cobro y crecimiento
+
+Pilotos con 2-3 gestorías, cobro recurrente con Stripe, conexión directa con
+Gmail/Outlook (OAuth), segunda integración contable y alta en autoservicio.

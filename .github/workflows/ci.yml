@@ -113,7 +113,19 @@ jobs:
         run: |
           cp .env.example .env
           docker compose config --quiet
-      - run: docker build -t invoices-app:ci .
+      - name: Validar compose.prod.yaml
+        run: APP_DOMAIN=demo.test DB_PASSWORD=x DB_DATABASE=invoices DB_USERNAME=invoices docker compose -f compose.prod.yaml config --quiet
+      - name: Imagen de desarrollo
+        run: docker build --target dev -t invoices-app:ci .
+      - name: Imágenes de producción (app y web)
+        run: |
+          docker build --target prod -t facturas-ia:prod .
+          docker build --target web -t facturas-ia:web .
+      - name: La imagen de producción arranca Laravel y trae el panel
+        run: |
+          docker run --rm -e APP_KEY=base64:$(openssl rand -base64 32) -e DB_CONNECTION=sqlite -e DB_DATABASE=:memory: facturas-ia:prod php artisan --version
+          docker run --rm --entrypoint sh facturas-ia:prod -c 'test -f public/build/manifest.json'
+          docker run --rm facturas-ia:web sh -c 'test -f /var/www/html/public/build/manifest.json'
       - name: Extensiones PHP disponibles
         run: docker run --rm invoices-app:ci php -m | grep -E 'pdo_pgsql|redis|intl|pcntl'
       - name: Conversor HEIC disponible

@@ -50,7 +50,9 @@ const isDoubtful = (field) => doubtful.value.has(field);
 // Nota de la IA y fallos de reglas del campo (el de "dato dudoso" ya repite la nota).
 const noteFor = (field) => [
     ...notes.value.filter((n) => n.field === field).map((n) => n.note.replace(/\.?$/, '.')),
-    ...failures.value.filter((f) => f.field === field && f.rule !== 'confidence').map((f) => f.message),
+    // Bajo cada campo, solo los errores de ese dato: los avisos generales (proveedor nuevo,
+    // posible duplicado) ya están arriba y la duda de la IA repite su propia nota.
+    ...failures.value.filter((f) => f.field === field && !['confidence', 'new_supplier', 'duplicate'].includes(f.rule)).map((f) => f.message),
 ].join(' ');
 
 const totals = computed(() => (form.value ? checkTotal(form.value) : null));

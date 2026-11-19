@@ -3,6 +3,12 @@
 return [
 
     /*
+    | Modo demo: muestra las credenciales en el login, avisa en el panel,
+    | desactiva integraciones con terceros y reinicia los datos cada noche.
+    */
+    'demo' => (bool) env('DEMO_MODE', false),
+
+    /*
     | Disco privado donde se guardan los documentos originales.
     | "documents" es local (storage/app/private/documents); pon "s3" para
     | usar un almacenamiento compatible con S3 (MinIO, R2, Hetzner...).

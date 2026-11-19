@@ -16,3 +16,9 @@ Schedule::command('invoices:send-digests')
 
 // Horizon: métricas de las colas para el panel.
 Schedule::command('horizon:snapshot')->everyFiveMinutes();
+
+// Demo pública: datos de ejemplo limpios cada mañana.
+Schedule::command('demo:reset')
+    ->dailyAt('04:00')
+    ->timezone('Europe/Madrid')
+    ->when(fn () => (bool) config('invoices.demo'));

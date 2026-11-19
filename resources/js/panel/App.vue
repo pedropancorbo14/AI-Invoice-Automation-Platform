@@ -12,16 +12,19 @@ function csrf() {
 
 <template>
     <div class="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+        <div v-if="boot.demo" class="bg-sky-600 px-4 py-1.5 text-center text-xs text-white">
+            Demo con facturas ficticias · los datos se reinician cada noche
+        </div>
         <header class="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
             <div class="mx-auto flex max-w-[1600px] items-center gap-3 px-4 py-3 sm:gap-6">
                 <span class="hidden font-semibold sm:inline">Facturas IA</span>
-                <nav class="flex gap-1 text-sm">
+                <nav class="-mx-1 flex min-w-0 gap-1 overflow-x-auto px-1 text-sm">
                     <RouterLink to="/revisar" class="nav-link" active-class="nav-link-active">Pendientes</RouterLink>
                     <RouterLink to="/metricas" class="nav-link" active-class="nav-link-active">Métricas</RouterLink>
                     <RouterLink to="/exportar" class="nav-link" active-class="nav-link-active">Exportar</RouterLink>
                     <a href="/subir" class="nav-link">Subir</a>
                 </nav>
-                <div class="ml-auto flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+                <div class="ml-auto flex shrink-0 items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
                     <span class="hidden sm:inline">{{ boot.user.name }} · {{ boot.account.name }}</span>
                     <form method="post" action="/logout">
                         <input type="hidden" name="_token" :value="csrf()" />

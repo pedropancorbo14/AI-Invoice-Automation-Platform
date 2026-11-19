@@ -1,0 +1,83 @@
+# Producción en un solo servidor: docker compose -f compose.prod.yaml up -d --build
+# Guía: docs/despliegue.md
+x-app: &app
+  build:
+    context: .
+    target: prod
+  image: facturas-ia:prod
+  env_file: .env
+  restart: unless-stopped
+  volumes:
+    - storage:/var/www/html/storage/app
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  app:
+    <<: *app
+
+  horizon:
+    <<: *app
+    command: php artisan horizon
+
+  scheduler:
+    <<: *app
+    command: php artisan schedule:work
+
+  web:
+    build:
+      context: .
+      target: web
+    image: facturas-ia:web
+    restart: unless-stopped
+    depends_on:
+      - app
+
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?Define APP_DOMAIN en .env}
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - web
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD en .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  storage:
+  postgres-data:
+  redis-data:
+  caddy-data:
+  caddy-config:

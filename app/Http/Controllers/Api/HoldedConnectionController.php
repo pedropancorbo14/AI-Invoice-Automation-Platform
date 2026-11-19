@@ -17,6 +17,7 @@ class HoldedConnectionController extends Controller
     public function update(Request $request, Company $company): CompanyResource
     {
         Gate::authorize('update', $company);
+        abort_if(config('invoices.demo'), 403, 'La conexión con Holded está desactivada en la demo.');
 
         $data = $request->validate(['api_key' => ['required', 'string', 'min:10', 'max:200']]);
         $company->forceFill(['holded_api_key' => trim($data['api_key'])])->save();
