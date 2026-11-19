@@ -10,6 +10,18 @@ excepción). Plan y estado: `docs/ROADMAP.md`. Visión general: `README.md`.
 - `composer analyse`: Larastan nivel 8; no añadas baseline ni `@phpstan-ignore`
 - `composer check`: las tres; debe pasar antes de cada commit
 
+## Ramas
+
+- `main` es la rama principal: siempre estable y con la CI en verde.
+  No se trabaja directamente en ella.
+- Cada cambio va en su propia rama, creada desde `main`, con nombre
+  `tipo/descripcion-corta` en minúsculas y con guiones:
+  - `feat/` funcionalidad nueva: `feat/fase-3-extraccion-ia`, `feat/exportacion-holded`
+  - `fix/` corrección: `fix/escaneos-png-descartados`
+  - `docs/` solo documentación: `docs/guia-reenvio-outlook`
+  - `chore/` mantenimiento, dependencias, CI: `chore/actualizar-actions`
+- Se integra en `main` con un pull request cuando `composer check` y la CI pasan.
+
 ## Reglas del dominio
 
 - **Multi-tenant.** Todo modelo con datos de cliente usa `BelongsToAccount`

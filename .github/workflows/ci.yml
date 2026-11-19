@@ -1,9 +1,10 @@
 name: CI
 
+# Se ejecuta en cada push a cualquier rama: main y las ramas de trabajo
+# (el resultado aparece también en sus pull requests).
 on:
   push:
-    branches: [main, 'claude/**']
-  pull_request:
+    branches: ['**']
 
 permissions:
   contents: read
