@@ -108,4 +108,22 @@ return [
         'timezone' => 'Europe/Madrid',
     ],
 
+    /*
+    | Exportación (fase 6). Al validarse, cada factura se manda a los destinos
+    | que tenga configurados su empresa.
+    */
+    'export' => [
+        'enabled' => (bool) env('EXPORT_ENABLED', true),
+
+        // Destinos factura a factura (implementan App\Support\Export\ExportTarget).
+        'targets' => [
+            App\Support\Export\Holded\HoldedTarget::class,
+        ],
+
+        'holded' => [
+            'base_url' => env('HOLDED_BASE_URL', 'https://api.holded.com/api/invoicing/v1'),
+            'timeout' => (int) env('HOLDED_TIMEOUT', 30),
+        ],
+    ],
+
 ];

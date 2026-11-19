@@ -6,6 +6,7 @@ use App\Enums\DocumentEventType;
 use App\Enums\DocumentSource;
 use App\Enums\DocumentStatus;
 use App\Exceptions\InvalidDocumentTransition;
+use App\Jobs\ExportDocument;
 use App\Models\Concerns\BelongsToAccount;
 use App\Support\Validation\Direction;
 use Database\Factories\DocumentFactory;
@@ -114,6 +115,11 @@ class Document extends Model
 
             $this->save();
 
+            // Cada factura validada sale hacia su programa contable (fase 6).
+            if ($to === DocumentStatus::Validated && config('invoices.export.enabled')) {
+                ExportDocument::dispatch($this->getKey())->afterCommit();
+            }
+
             $this->recordEvent(
                 DocumentEventType::StatusChanged,
                 from: $from,
@@ -195,6 +201,14 @@ class Document extends Model
     public function latestExtraction(): HasOne
     {
         return $this->hasOne(DocumentExtraction::class)->latestOfMany();
+    }
+
+    /**
+     * @return HasMany<DocumentExport, $this>
+     */
+    public function exports(): HasMany
+    {
+        return $this->hasMany(DocumentExport::class);
     }
 
     /**

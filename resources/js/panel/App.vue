@@ -1,7 +1,9 @@
 <script setup>
+import { provide } from 'vue';
 import { RouterLink, RouterView } from 'vue-router';
 
-defineProps({ boot: { type: Object, required: true } });
+const props = defineProps({ boot: { type: Object, required: true } });
+provide('boot', props.boot);
 
 function csrf() {
     return document.querySelector('meta[name="csrf-token"]')?.content ?? '';
@@ -16,6 +18,7 @@ function csrf() {
                 <nav class="flex gap-1 text-sm">
                     <RouterLink to="/revisar" class="nav-link" active-class="nav-link-active">Pendientes</RouterLink>
                     <RouterLink to="/metricas" class="nav-link" active-class="nav-link-active">Métricas</RouterLink>
+                    <RouterLink to="/exportar" class="nav-link" active-class="nav-link-active">Exportar</RouterLink>
                     <a href="/subir" class="nav-link">Subir</a>
                 </nav>
                 <div class="ml-auto flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">

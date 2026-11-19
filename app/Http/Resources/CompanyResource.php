@@ -22,6 +22,8 @@ class CompanyResource extends JsonResource
             'tax_id' => $this->tax_id,
             // Dirección a la que el cliente reenvía sus facturas.
             'inbox_address' => $this->inboxAddress(),
+            // Solo si está conectado; la clave nunca sale de la base de datos.
+            'holded_connected' => filled($this->holded_api_key),
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

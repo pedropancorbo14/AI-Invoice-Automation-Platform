@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import InboxView from './views/InboxView.vue';
 import ReviewView from './views/ReviewView.vue';
 import MetricsView from './views/MetricsView.vue';
+import ExportView from './views/ExportView.vue';
 
 export const router = createRouter({
     history: createWebHistory('/panel/'),
@@ -10,6 +11,7 @@ export const router = createRouter({
         { path: '/revisar', name: 'inbox', component: InboxView, meta: { title: 'Pendientes de revisar' } },
         { path: '/revisar/:id(\\d+)', name: 'review', component: ReviewView, props: (r) => ({ id: Number(r.params.id) }), meta: { title: 'Revisar' } },
         { path: '/metricas', name: 'metrics', component: MetricsView, meta: { title: 'Métricas' } },
+        { path: '/exportar', name: 'export', component: ExportView, meta: { title: 'Exportar' } },
         { path: '/:pathMatch(.*)*', redirect: '/revisar' },
     ],
 });
