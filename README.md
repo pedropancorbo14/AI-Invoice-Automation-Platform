@@ -9,7 +9,7 @@ excepción*).
 email ──► cola ──► LLM (clasifica + extrae) ──► reglas PHP ──► revisión (si hace falta) ──► exportación
 ```
 
-> Estado: **fase 1 completada**; siguiente: fase 2 (entrada por email). Ver [docs/ROADMAP.md](docs/ROADMAP.md).
+> Estado: **fases 1 y 2 completadas**; siguiente: fase 3 (extracción con IA). Ver [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Flujo de estados
 
@@ -50,6 +50,41 @@ Un test comprueba que **toda** ruta autenticada lleva el middleware `tenant`.
 **Roles:** `admin` (gestiona clientes, usuarios y configuración) y `reviewer`
 (revisa y corrige documentos).
 
+## Entrada de documentos
+
+**Por email (la vía principal).** Cada cliente tiene su dirección con
+subdirección sobre un único buzón:
+
+| Dirección | Va a |
+|---|---|
+| `facturas+<token del cliente>@dominio` | ese cliente |
+| `facturas+<token de la cuenta>@dominio` | la cuenta, bandeja "sin asignar" |
+| sin token o token desconocido | nadie (`unrouted`, solo lo ve quien opera la plataforma) |
+
+El comando `inbox:fetch` lee el buzón por IMAP cada 2 minutos (scheduler),
+guarda el `.eml` original y encola un job por correo (`ProcessInboundEmail`):
+
+1. **Enruta** por el token. Mira `Delivered-To` / `X-Original-To` antes que
+   `To`, porque al reenviar con una regla el `To` sigue siendo el del cliente.
+2. **Abre** los correos reenviados como adjunto (Outlook) hasta 3 niveles.
+3. **Filtra** adjuntos por contenido (magic bytes), no por extensión: acepta
+   PDF, JPG, PNG y HEIC; descarta logos, iconos y banners por dimensiones
+   (`< 300 px`), y `.ics`, `winmail.dat`, firmas digitales...
+4. **Descarta duplicados** por SHA-256 dentro de la cuenta (y el mismo correo
+   dos veces, por `Message-ID`).
+5. **Factura por enlace:** sin adjunto pero con enlaces de descarga → guarda el
+   correo como documento en `NEEDS_REVIEW` con el motivo y los enlaces.
+6. **Confirmación de Gmail:** detecta el código para activar el reenvío y lo
+   muestra en `/api/inbound-emails`.
+
+Cada correo queda en `inbound_emails` con su resumen (qué pasó con cada
+adjunto) y los documentos enlazan a su correo de origen.
+
+**Subida manual.** Página `/subir` (arrastrar y soltar) o `POST /api/documents`.
+Mismas reglas: solo tipos válidos y sin duplicados.
+
+Guía para el cliente: [docs/guia-reenvio.md](docs/guia-reenvio.md) (Gmail y Outlook).
+
 ## Arrancar con Docker
 
 Requisitos: Docker y Docker Compose.
@@ -62,7 +97,7 @@ docker compose exec app php artisan key:generate
 docker compose exec app php artisan migrate --seed
 ```
 
-- App: http://localhost:8080
+- App: http://localhost:8080 (subida manual en `/subir`)
 - Horizon (colas): http://localhost:8080/horizon
 - Mailpit (emails salientes): http://localhost:8025
 
@@ -76,18 +111,26 @@ curl -s -X POST localhost:8080/api/auth/token \
 curl -s localhost:8080/api/documents -H "Authorization: Bearer <token>" -H 'Accept: application/json'
 ```
 
-## API (fase 1)
+Para leer un buzón real, rellena las variables `INBOX_*` de `.env` y pon
+`INBOX_ENABLED=true`. Para probarlo a mano: `docker compose exec app php artisan inbox:fetch`.
+
+## API
 
 | Método | Ruta | Descripción |
 |---|---|---|
 | POST | `/api/auth/token` | Login: devuelve un token de Sanctum |
 | DELETE | `/api/auth/token` | Revoca el token actual |
+| GET | `/api/me` | Usuario, cuenta y dirección "sin asignar" |
 | GET | `/api/companies` | Clientes de la cuenta |
 | POST | `/api/companies` | Crear cliente (solo admin) |
-| GET | `/api/companies/{id}` | Ver cliente |
-| GET | `/api/documents` | Documentos (filtros: `status`, `company_id`) |
+| GET | `/api/companies/{id}` | Ver cliente (incluye su `inbox_address`) |
+| GET | `/api/documents` | Documentos (filtros: `status`, `company_id`, `unassigned`) |
+| POST | `/api/documents` | Subida manual (`files[]`, `company_id` opcional) |
 | GET | `/api/documents/{id}` | Documento con su auditoría |
 | GET | `/api/documents/{id}/file` | Descarga del original (nunca es público) |
+| PUT | `/api/documents/{id}/company` | Asignar a un cliente (desde "sin asignar") |
+| GET | `/api/inbound-emails` | Correos recibidos (filtros: `status`, `company_id`) |
+| GET | `/api/inbound-emails/{id}` | Correo con sus documentos y el resumen de adjuntos |
 
 ## Calidad
 

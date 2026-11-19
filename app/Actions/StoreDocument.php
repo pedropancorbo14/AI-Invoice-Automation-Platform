@@ -6,6 +6,7 @@ use App\Enums\DocumentSource;
 use App\Models\Account;
 use App\Models\Company;
 use App\Models\Document;
+use App\Models\InboundEmail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -27,9 +28,14 @@ class StoreDocument
         string $mimeType,
         DocumentSource $source,
         ?Company $company = null,
+        ?InboundEmail $inboundEmail = null,
     ): Document {
         if ($company !== null && $company->account_id !== $account->getKey()) {
             throw new InvalidArgumentException('La empresa no pertenece a la cuenta.');
+        }
+
+        if ($inboundEmail !== null && $inboundEmail->account_id !== $account->getKey()) {
+            throw new InvalidArgumentException('El correo no pertenece a la cuenta.');
         }
 
         $disk = (string) config('invoices.documents_disk');
@@ -45,9 +51,10 @@ class StoreDocument
         Storage::disk($disk)->put($path, $contents);
 
         try {
-            return DB::transaction(function () use ($account, $company, $source, $disk, $path, $originalFilename, $mimeType, $contents): Document {
+            return DB::transaction(function () use ($account, $company, $inboundEmail, $source, $disk, $path, $originalFilename, $mimeType, $contents): Document {
                 $document = new Document([
                     'company_id' => $company?->getKey(),
+                    'inbound_email_id' => $inboundEmail?->getKey(),
                     'source' => $source,
                     'disk' => $disk,
                     'path' => $path,

@@ -19,6 +19,7 @@ class DocumentResource extends JsonResource
         return [
             'id' => $this->id,
             'company_id' => $this->company_id,
+            'inbound_email_id' => $this->inbound_email_id,
             'status' => $this->status->value,
             'status_label' => $this->status->label(),
             'status_reason' => $this->status_reason,

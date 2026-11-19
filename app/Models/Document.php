@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 /**
  * @property DocumentStatus $status
@@ -33,6 +34,7 @@ class Document extends Model
      */
     protected $fillable = [
         'company_id',
+        'inbound_email_id',
         'source',
         'disk',
         'path',
@@ -133,6 +135,33 @@ class Document extends Model
             'reason' => $reason,
             'payload' => $payload === [] ? null : $payload,
         ]);
+    }
+
+    /**
+     * Asigna el documento a un cliente (desde la bandeja "sin asignar").
+     */
+    public function assignTo(Company $company, ?User $by = null): void
+    {
+        if ($company->account_id !== $this->account_id) {
+            throw new InvalidArgumentException('La empresa no pertenece a la cuenta del documento.');
+        }
+
+        $previous = $this->company_id;
+        $this->company()->associate($company);
+        $this->save();
+
+        $this->recordEvent(DocumentEventType::Assigned, by: $by, payload: [
+            'from_company_id' => $previous,
+            'to_company_id' => $company->getKey(),
+        ]);
+    }
+
+    /**
+     * @return BelongsTo<InboundEmail, $this>
+     */
+    public function inboundEmail(): BelongsTo
+    {
+        return $this->belongsTo(InboundEmail::class);
     }
 
     /**

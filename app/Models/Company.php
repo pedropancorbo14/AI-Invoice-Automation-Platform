@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToAccount;
+use App\Support\Inbox\InboxAddress;
 use Database\Factories\CompanyFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -29,6 +30,14 @@ class Company extends Model
             $company->inbox_token ??= self::generateInboxToken();
             $company->tax_id = self::normalizeTaxId($company->tax_id);
         });
+    }
+
+    /**
+     * Dirección a la que el cliente reenvía sus facturas.
+     */
+    public function inboxAddress(): string
+    {
+        return InboxAddress::for($this->inbox_token);
     }
 
     public static function generateInboxToken(): string

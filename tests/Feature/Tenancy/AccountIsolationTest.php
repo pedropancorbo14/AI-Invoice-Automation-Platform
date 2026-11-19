@@ -139,10 +139,9 @@ describe('policies', function () {
     });
 });
 
-it('protects every authenticated API route with the tenant middleware', function () {
+it('protects every authenticated route with the tenant middleware', function () {
     $unprotected = collect(app('router')->getRoutes()->getRoutes())
-        ->filter(fn ($route) => str_starts_with($route->uri(), 'api/'))
-        ->filter(fn ($route) => in_array('auth:sanctum', $route->gatherMiddleware(), true))
+        ->filter(fn ($route) => array_intersect(['auth', 'auth:sanctum'], $route->gatherMiddleware()) !== [])
         ->reject(fn ($route) => in_array('tenant', $route->gatherMiddleware(), true))
         ->map(fn ($route) => $route->uri())
         ->values()

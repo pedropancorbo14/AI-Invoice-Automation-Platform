@@ -20,6 +20,8 @@ class CompanyResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'tax_id' => $this->tax_id,
+            // Dirección a la que el cliente reenvía sus facturas.
+            'inbox_address' => $this->inboxAddress(),
             'created_at' => $this->created_at?->toIso8601String(),
         ];
     }

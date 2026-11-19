@@ -23,6 +23,10 @@ excepción). Plan y estado: `docs/ROADMAP.md`. Visión general: `README.md`.
   `DocumentStatus::allowedTransitions()` con su test.
 - **Auditoría inmutable.** `DocumentEvent` solo se inserta.
 - **La IA extrae, Laravel decide.** Las reglas de validación son PHP determinista.
+- **Entrada de documentos.** Todo correo entra por `ReceiveInboundEmail`
+  (guarda el `.eml` y encola `ProcessInboundEmail`). Los adjuntos se aceptan
+  por contenido (`FileType::detect`), nunca por extensión. Los duplicados se
+  buscan por `sha256` dentro de la cuenta. El job debe seguir siendo idempotente.
 - **Ficheros privados.** Se guardan con `StoreDocument` en el disco
   `config('invoices.documents_disk')` y se sirven solo tras autorización.
 
@@ -30,3 +34,5 @@ excepción). Plan y estado: `docs/ROADMAP.md`. Visión general: `README.md`.
 
 - Código en inglés; comentarios, mensajes y motivos para el usuario en español.
 - Tests en `tests/Feature` (con BD) y `tests/Unit` (sin BD), estilo Pest.
+- Correos de prueba con `Tests\Support\TestMail` y ficheros con
+  `Tests\Support\Files`; el buzón IMAP se sustituye por `FakeMailbox`.

@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Support\Inbox\InboxAddress;
 use Database\Factories\AccountFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,10 +14,26 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * Tenant: la gestoría o empresa que contrata el servicio.
  */
 #[Fillable(['name'])]
+#[Hidden(['inbox_token'])]
 class Account extends Model
 {
     /** @use HasFactory<AccountFactory> */
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::creating(function (Account $account): void {
+            $account->inbox_token ??= Company::generateInboxToken();
+        });
+    }
+
+    /**
+     * Dirección general de la cuenta: lo que llega va a "sin asignar".
+     */
+    public function inboxAddress(): string
+    {
+        return InboxAddress::for($this->inbox_token);
+    }
 
     /**
      * @return HasMany<User, $this>
