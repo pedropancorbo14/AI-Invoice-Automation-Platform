@@ -1,7 +1,8 @@
 # Facturas IA: guía para agentes
 
 Plataforma Laravel 13 que procesa facturas por email con IA (gestión por
-excepción). Plan y estado: `docs/ROADMAP.md`. Visión general: `README.md`.
+excepción). Plan y estado: `docs/ROADMAP.md`. Visión general: `README.md`;
+detalle técnico: `docs/arquitectura.md`.
 
 ## Comandos
 
@@ -63,6 +64,9 @@ excepción). Plan y estado: `docs/ROADMAP.md`. Visión general: `README.md`.
 - **Panel.** Vue 3 en `resources/js/panel`, llama a la API con la sesión
   (Sanctum SPA). Las cuentas de importes en el navegador van en céntimos
   (`invoice.js`), igual que en PHP.
+- **Demo.** Con `DEMO_MODE=true` no se conectan integraciones reales (Holded)
+  y `demo:reset` borra todo cada noche: nunca debe ejecutarse sin el modo demo.
+  Los datos de ejemplo salen de `DemoInvoicesSeeder` y pasan por las reglas reales.
 - **Ficheros privados.** Se guardan con `StoreDocument` en el disco
   `config('invoices.documents_disk')` y se sirven solo tras autorización.
 

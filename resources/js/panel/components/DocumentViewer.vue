@@ -29,7 +29,8 @@ function pick(event) {
 
 <template>
     <div class="relative bg-slate-100 dark:bg-slate-950">
-        <iframe v-if="isPdf" :src="url" title="Documento" class="absolute inset-0 h-full w-full" />
+        <!-- Ajustado al ancho y sin la barra de miniaturas: aquí solo se lee la factura. -->
+        <iframe v-if="isPdf" :src="`${url}#navpanes=0&view=FitH`" title="Documento" class="absolute inset-0 h-full w-full" />
 
         <div v-else-if="isImage" class="absolute inset-0 overflow-auto p-4">
             <img :src="url" alt="Documento" class="mx-auto max-w-full rounded shadow" />

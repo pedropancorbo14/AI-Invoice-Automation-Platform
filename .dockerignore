@@ -4,3 +4,8 @@ node_modules
 storage/logs/*
 storage/framework/cache/*
 .env
+public/build
+storage/app/*
+!storage/app/.gitignore
+tests
+.github
