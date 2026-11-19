@@ -60,6 +60,20 @@ describe('API', function () {
         $this->get("/api/documents/{$this->theirDocument->id}/file")->assertNotFound();
     });
 
+    it('shows the latest extraction of a document', function () {
+        actingAsUser($this->user);
+        $this->myDocument->extractions()->create([
+            'account_id' => $this->mine->id, 'model' => 'm', 'input_mode' => 'text', 'document_type' => 'invoice',
+            'data' => ['total' => '121.00'], 'confidence' => ['total' => 'low'], 'notes' => [],
+            'input_tokens' => 1, 'output_tokens' => 1, 'cost_usd' => 0.01, 'duration_ms' => 10,
+        ]);
+
+        $this->getJson("/api/documents/{$this->myDocument->id}")
+            ->assertOk()
+            ->assertJsonPath('data.extraction.data.total', '121.00')
+            ->assertJsonPath('data.extraction.doubtful_fields', ['total']);
+    });
+
     it('shows a document from the own account with its audit trail', function () {
         actingAsUser($this->user);
 

@@ -4,8 +4,9 @@ FROM php:8.4-fpm-bookworm
 COPY --from=mlocati/php-extension-installer:2.7 /usr/bin/install-php-extensions /usr/local/bin/
 COPY --from=composer:2.8 /usr/bin/composer /usr/local/bin/composer
 
+# libheif-examples trae heif-convert, para pasar las fotos HEIC del iPhone a JPG.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git unzip \
+    && apt-get install -y --no-install-recommends git unzip libheif-examples \
     && rm -rf /var/lib/apt/lists/* \
     && install-php-extensions pdo_pgsql redis pcntl intl zip gd bcmath exif opcache
 

@@ -3,6 +3,7 @@
 namespace App\Actions;
 
 use App\Enums\DocumentSource;
+use App\Jobs\ExtractDocument;
 use App\Models\Account;
 use App\Models\Company;
 use App\Models\Document;
@@ -18,6 +19,8 @@ use Throwable;
  * estado RECEIVED. Es el punto de entrada común para email y subida manual.
  *
  * Ruta: accounts/{account}/{yyyy}/{mm}/{ulid}.{ext}
+ *
+ * Al guardarlo encola su extracción con IA (fase 3).
  */
 class StoreDocument
 {
@@ -29,6 +32,7 @@ class StoreDocument
         DocumentSource $source,
         ?Company $company = null,
         ?InboundEmail $inboundEmail = null,
+        bool $queueExtraction = true,
     ): Document {
         if ($company !== null && $company->account_id !== $account->getKey()) {
             throw new InvalidArgumentException('La empresa no pertenece a la cuenta.');
@@ -51,7 +55,7 @@ class StoreDocument
         Storage::disk($disk)->put($path, $contents);
 
         try {
-            return DB::transaction(function () use ($account, $company, $inboundEmail, $source, $disk, $path, $originalFilename, $mimeType, $contents): Document {
+            return DB::transaction(function () use ($account, $company, $inboundEmail, $queueExtraction, $source, $disk, $path, $originalFilename, $mimeType, $contents): Document {
                 $document = new Document([
                     'company_id' => $company?->getKey(),
                     'inbound_email_id' => $inboundEmail?->getKey(),
@@ -65,6 +69,10 @@ class StoreDocument
                 ]);
                 $document->account_id = $account->getKey();
                 $document->save();
+
+                if ($queueExtraction && config('invoices.extraction.enabled')) {
+                    ExtractDocument::dispatch($document->id)->afterCommit();
+                }
 
                 return $document;
             });

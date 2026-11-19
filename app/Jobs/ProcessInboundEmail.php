@@ -190,6 +190,8 @@ class ProcessInboundEmail implements ShouldQueue
                 source: DocumentSource::Email,
                 company: $route->company,
                 inboundEmail: $inbound,
+                // Es el propio correo, no una factura: no se manda a la IA.
+                queueExtraction: false,
             );
 
         if ($document->status === DocumentStatus::Received) {

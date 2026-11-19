@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use Anthropic\Client;
+use App\Support\Extraction\ClaudeProvider;
+use App\Support\Extraction\LLMProvider;
 use App\Support\Inbox\ImapMailbox;
 use App\Support\Inbox\Mailbox;
 use App\Support\Tenancy\CurrentAccount;
@@ -20,6 +23,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->scoped(CurrentAccount::class);
 
         $this->app->bind(Mailbox::class, fn () => new ImapMailbox((array) config('invoices.inbox.imap')));
+
+        // Claude lee ANTHROPIC_API_KEY del entorno. Se crea solo cuando un job lo necesita.
+        $this->app->bind(LLMProvider::class, fn () => new ClaudeProvider(
+            new Client(requestOptions: ['maxRetries' => 2]),
+            (array) config('invoices.extraction'),
+        ));
     }
 
     /**

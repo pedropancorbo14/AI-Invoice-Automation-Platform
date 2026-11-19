@@ -29,6 +29,7 @@ class DocumentResource extends JsonResource
             'size' => $this->size,
             'sha256' => $this->sha256,
             'created_at' => $this->created_at?->toIso8601String(),
+            'extraction' => new DocumentExtractionResource($this->whenLoaded('latestExtraction')),
             'events' => DocumentEventResource::collection($this->whenLoaded('events')),
         ];
     }
