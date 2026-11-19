@@ -93,7 +93,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: docker compose config --quiet
+      - name: Validar compose.yaml
+        run: |
+          cp .env.example .env
+          docker compose config --quiet
       - run: docker build -t invoices-app:ci .
       - name: Extensiones PHP disponibles
         run: docker run --rm invoices-app:ci php -m | grep -E 'pdo_pgsql|redis|intl|pcntl'
