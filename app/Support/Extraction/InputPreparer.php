@@ -1,0 +1,133 @@
+<?php
+
+namespace App\Support\Extraction;
+
+use App\Support\Extraction\Exceptions\UnsupportedInput;
+use Illuminate\Support\Facades\File;
+use Smalot\PdfParser\Parser;
+use Symfony\Component\Process\ExecutableFinder;
+use Symfony\Component\Process\Process;
+use Throwable;
+
+/**
+ * Decide qué se le manda al modelo y lo deja listo:
+ * - PDF con capa de texto → el texto (lo más barato).
+ * - PDF escaneado → el PDF entero.
+ * - Foto JPG/PNG → reducida a un tamaño razonable.
+ * - Foto HEIC (iPhone) → convertida a JPG, porque la API no admite HEIC.
+ */
+class InputPreparer
+{
+    public function prepare(string $contents, string $mimeType, ?string $companyName = null, ?string $companyTaxId = null): ExtractionInput
+    {
+        [$mode, $content, $mediaType] = match ($mimeType) {
+            'application/pdf' => $this->pdf($contents),
+            'image/jpeg', 'image/png' => [InputMode::Image, ...$this->image($contents, $mimeType)],
+            'image/heic' => [InputMode::Image, ...$this->image($this->heicToJpeg($contents), 'image/jpeg')],
+            default => throw new UnsupportedInput("No se puede leer automáticamente un documento de tipo {$mimeType}."),
+        };
+
+        return new ExtractionInput($mode, $content, $mediaType, $companyName, $companyTaxId);
+    }
+
+    /**
+     * @return array{0: InputMode, 1: string, 2: string}
+     */
+    private function pdf(string $contents): array
+    {
+        if (config('invoices.extraction.prefer_text')) {
+            $text = $this->pdfText($contents);
+
+            if (mb_strlen($text) >= (int) config('invoices.extraction.min_text_chars')) {
+                return [InputMode::Text, $text, 'text/plain'];
+            }
+        }
+
+        return [InputMode::Pdf, $contents, 'application/pdf'];
+    }
+
+    private function pdfText(string $contents): string
+    {
+        try {
+            $text = (new Parser)->parseContent($contents)->getText();
+        } catch (Throwable) {
+            // PDF raro o cifrado: que lo lea el modelo como imagen.
+            return '';
+        }
+
+        // Quitamos el ruido de espacios para no pagar tokens de más.
+        $text = (string) preg_replace('/[ \t\x{00A0}]+/u', ' ', $text);
+        $text = (string) preg_replace('/\n\s*\n+/', "\n\n", $text);
+
+        return trim($text);
+    }
+
+    /**
+     * Reduce la imagen si es muy grande: más píxeles no mejoran la lectura y
+     * cuestan más tokens (y la API tiene un límite de tamaño por imagen).
+     *
+     * @return array{0: string, 1: string}
+     */
+    private function image(string $contents, string $mimeType): array
+    {
+        $maxSide = (int) config('invoices.extraction.max_image_side');
+        $size = @getimagesizefromstring($contents);
+
+        if ($size === false) {
+            throw new UnsupportedInput('La imagen está dañada o no se puede abrir.');
+        }
+
+        [$width, $height] = $size;
+
+        if (max($width, $height) <= $maxSide && strlen($contents) <= 4 * 1024 * 1024) {
+            return [$contents, $mimeType];
+        }
+
+        $source = @imagecreatefromstring($contents);
+
+        if ($source === false) {
+            throw new UnsupportedInput('La imagen está dañada o no se puede abrir.');
+        }
+
+        $scale = min(1, $maxSide / max($width, $height));
+        $resized = imagescale($source, max(1, (int) round($width * $scale)), max(1, (int) round($height * $scale)));
+
+        if ($resized === false) {
+            throw new UnsupportedInput('No se pudo reducir la imagen.');
+        }
+
+        ob_start();
+        imagejpeg($resized, null, 85);
+
+        return [(string) ob_get_clean(), 'image/jpeg'];
+    }
+
+    /**
+     * Convierte HEIC a JPG con heif-convert (paquete libheif-examples, ya en la imagen Docker).
+     */
+    private function heicToJpeg(string $contents): string
+    {
+        $binary = (new ExecutableFinder)->find('heif-convert');
+
+        if ($binary === null) {
+            throw new UnsupportedInput('Las fotos HEIC necesitan heif-convert (libheif-examples) instalado en el servidor.');
+        }
+
+        $dir = sys_get_temp_dir().'/heic-'.bin2hex(random_bytes(6));
+        File::ensureDirectoryExists($dir);
+
+        try {
+            File::put("{$dir}/in.heic", $contents);
+            $process = new Process([$binary, '-q', '90', "{$dir}/in.heic", "{$dir}/out.jpg"]);
+            $process->setTimeout(60)->run();
+
+            if (! $process->isSuccessful() || ! File::exists("{$dir}/out.jpg")) {
+                throw new UnsupportedInput('No se pudo convertir la foto HEIC a JPG.');
+            }
+
+            return File::get("{$dir}/out.jpg");
+        } finally {
+            File::deleteDirectory($dir);
+        }
+    }
+}

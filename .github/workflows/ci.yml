@@ -101,3 +101,5 @@ jobs:
       - run: docker build -t invoices-app:ci .
       - name: Extensiones PHP disponibles
         run: docker run --rm invoices-app:ci php -m | grep -E 'pdo_pgsql|redis|intl|pcntl'
+      - name: Conversor HEIC disponible
+        run: docker run --rm invoices-app:ci sh -c 'command -v heif-convert'

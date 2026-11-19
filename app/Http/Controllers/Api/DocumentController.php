@@ -42,7 +42,7 @@ class DocumentController extends Controller
     {
         Gate::authorize('view', $document);
 
-        return new DocumentResource($document->load('events'));
+        return new DocumentResource($document->load(['events', 'latestExtraction']));
     }
 
     /**

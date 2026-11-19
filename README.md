@@ -9,7 +9,7 @@ excepción*).
 email ──► cola ──► LLM (clasifica + extrae) ──► reglas PHP ──► revisión (si hace falta) ──► exportación
 ```
 
-> Estado: **fases 1 y 2 completadas**; siguiente: fase 3 (extracción con IA). Ver [docs/ROADMAP.md](docs/ROADMAP.md).
+> Estado: **fases 1 y 2 completadas; fase 3 con el código listo**, pendiente del dataset real. Ver [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Flujo de estados
 
@@ -85,6 +85,43 @@ Mismas reglas: solo tipos válidos y sin duplicados.
 
 Guía para el cliente: [docs/guia-reenvio.md](docs/guia-reenvio.md) (Gmail y Outlook).
 
+## Extracción con IA
+
+Cada documento recibido pasa por Claude con **salida estructurada** (un JSON
+schema que la respuesta siempre cumple). La IA extrae; Laravel decide:
+
+```
+RECEIVED → CLASSIFIED → EXTRACTED      factura, ticket o rectificativa
+                      → IGNORED        no es una factura
+                      → NEEDS_REVIEW   albarán o presupuesto
+         → NEEDS_REVIEW                la IA lo rechaza o no se puede leer
+         → FAILED                      error técnico (tras 3 intentos)
+```
+
+- **Entrada más barata posible:** si el PDF tiene capa de texto se manda el
+  texto; si es un escaneo, el PDF; las fotos se reducen a 2000 px y las HEIC se
+  convierten a JPG.
+- **Qué devuelve:** proveedor y cliente (nombre y CIF), número, fechas, desglose
+  de IVA por tipo (con recargo de equivalencia), retención de IRPF, total,
+  líneas, y **confianza por campo** (alta, media o baja) con una nota cuando
+  algo no se lee bien.
+- **Coste:** cada extracción guarda modelo, tokens, coste en USD y tiempo
+  (`document_extractions`).
+- **Fiabilidad:** reintentos con espera creciente para errores pasajeros;
+  `fallbacks` en el servidor por si el modelo rechaza la petición; los rechazos
+  van a revisión.
+- **Proveedor intercambiable:** interfaz `LLMProvider`; el modelo y el esfuerzo
+  se cambian por `.env` (`EXTRACTION_MODEL`, `EXTRACTION_EFFORT`).
+
+Recibida o emitida no lo decide la IA: lo decidirá Laravel en la fase 4
+comparando los CIF con el de la empresa.
+
+```bash
+php artisan invoices:extract --received    # extraer lo pendiente
+php artisan invoices:extract --failed      # reintentar lo fallido
+php artisan invoices:eval                  # medir precisión y coste (ver docs/evaluacion.md)
+```
+
 ## Arrancar con Docker
 
 Requisitos: Docker y Docker Compose.
@@ -126,7 +163,7 @@ Para leer un buzón real, rellena las variables `INBOX_*` de `.env` y pon
 | GET | `/api/companies/{id}` | Ver cliente (incluye su `inbox_address`) |
 | GET | `/api/documents` | Documentos (filtros: `status`, `company_id`, `unassigned`) |
 | POST | `/api/documents` | Subida manual (`files[]`, `company_id` opcional) |
-| GET | `/api/documents/{id}` | Documento con su auditoría |
+| GET | `/api/documents/{id}` | Documento con su auditoría y su última extracción |
 | GET | `/api/documents/{id}/file` | Descarga del original (nunca es público) |
 | PUT | `/api/documents/{id}/company` | Asignar a un cliente (desde "sin asignar") |
 | GET | `/api/inbound-emails` | Correos recibidos (filtros: `status`, `company_id`) |

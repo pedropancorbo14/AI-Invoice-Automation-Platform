@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -154,6 +155,22 @@ class Document extends Model
             'from_company_id' => $previous,
             'to_company_id' => $company->getKey(),
         ]);
+    }
+
+    /**
+     * @return HasMany<DocumentExtraction, $this>
+     */
+    public function extractions(): HasMany
+    {
+        return $this->hasMany(DocumentExtraction::class);
+    }
+
+    /**
+     * @return HasOne<DocumentExtraction, $this>
+     */
+    public function latestExtraction(): HasOne
+    {
+        return $this->hasOne(DocumentExtraction::class)->latestOfMany();
     }
 
     /**

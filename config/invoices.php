@@ -48,4 +48,37 @@ return [
         ],
     ],
 
+    /*
+    | Extracción con IA (fase 3). La IA extrae; Laravel decide qué hacer.
+    */
+    'extraction' => [
+        'enabled' => (bool) env('EXTRACTION_ENABLED', true),
+
+        // Se puede cambiar por modelo para comparar coste y precisión con invoices:eval.
+        'model' => env('EXTRACTION_MODEL', 'claude-opus-5-5'),
+        // low | medium | high | xhigh | max. Más alto = más preciso y más caro.
+        'effort' => env('EXTRACTION_EFFORT', 'medium'),
+        'max_tokens' => (int) env('EXTRACTION_MAX_TOKENS', 16000),
+        'timeout' => (float) env('EXTRACTION_TIMEOUT', 120),
+
+        // Si el PDF tiene capa de texto se manda el texto (mucho más barato);
+        // si no (escaneo), el PDF entero.
+        'prefer_text' => (bool) env('EXTRACTION_PREFER_TEXT', true),
+        'min_text_chars' => (int) env('EXTRACTION_MIN_TEXT_CHARS', 200),
+
+        // Las fotos se reducen a este lado máximo (px) antes de mandarlas.
+        'max_image_side' => (int) env('EXTRACTION_MAX_IMAGE_SIDE', 2000),
+
+        // Qué hacer según el tipo de documento que detecta la IA.
+        'ignored_types' => ['other'],
+        'review_types' => ['delivery_note', 'quote'],
+
+        // Precios en USD por millón de tokens (para el coste por factura).
+        'pricing' => [
+            'claude-opus-5-5' => ['input' => 4.00, 'output' => 20.00, 'cache_write' => 5.00, 'cache_read' => 0.20],
+            'claude-sonnet-5-5' => ['input' => 2.00, 'output' => 10.00, 'cache_write' => 2.50, 'cache_read' => 0.10],
+            'claude-haiku-5-5' => ['input' => 0.10, 'output' => 0.50, 'cache_write' => 0.125, 'cache_read' => 0.01],
+        ],
+    ],
+
 ];

@@ -39,6 +39,11 @@ excepción). Plan y estado: `docs/ROADMAP.md`. Visión general: `README.md`.
   (guarda el `.eml` y encola `ProcessInboundEmail`). Los adjuntos se aceptan
   por contenido (`FileType::detect`), nunca por extensión. Los duplicados se
   buscan por `sha256` dentro de la cuenta. El job debe seguir siendo idempotente.
+- **Extracción con IA.** Todo pasa por la interfaz `LLMProvider`; nunca se
+  llama al SDK de Anthropic fuera de `ClaudeProvider`. La IA devuelve datos y
+  confianza; las decisiones (ignorar, revisar, validar) las toma PHP. Los
+  importes se guardan como texto con 2 decimales. Cualquier cambio en el prompt
+  o en el esquema se mide con `invoices:eval` antes de darlo por bueno.
 - **Ficheros privados.** Se guardan con `StoreDocument` en el disco
   `config('invoices.documents_disk')` y se sirven solo tras autorización.
 
@@ -48,3 +53,6 @@ excepción). Plan y estado: `docs/ROADMAP.md`. Visión general: `README.md`.
 - Tests en `tests/Feature` (con BD) y `tests/Unit` (sin BD), estilo Pest.
 - Correos de prueba con `Tests\Support\TestMail` y ficheros con
   `Tests\Support\Files`; el buzón IMAP se sustituye por `FakeMailbox`.
+- Los tests nunca llaman a la API: `TestCase` registra `FakeLLMProvider`, y
+  `FakeAnthropicApi` simula la API a nivel HTTP para probar `ClaudeProvider`.
+  La extracción está desactivada por defecto en tests (`EXTRACTION_ENABLED`).

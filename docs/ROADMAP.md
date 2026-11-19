@@ -7,7 +7,7 @@ cumplir su criterio.
 |---|---|---|---|
 | 1. Base del proyecto | 1 | Laravel multi-tenant con colas, tests y CI | ✅ completada |
 | 2. Entrada por email | 2 | Los adjuntos llegan solos y se guardan | ✅ completada (falta probar con el buzón real) |
-| 3. Extracción con IA | 3-4 | Datos estructurados con confianza por campo | ⏳ |
+| 3. Extracción con IA | 3-4 | Datos estructurados con confianza por campo | 🔧 código listo; falta el dataset y la evaluación real |
 | 4. Validación y reglas | 5 | El sistema decide solo qué está bien y qué no | ⏳ |
 | 5. Revisión y avisos | 6 | Bandeja de pendientes y resumen por email | ⏳ |
 | 6. Exportación | 7 | CSV, Excel y Holded automáticos | ⏳ |
@@ -45,12 +45,41 @@ cumplir su criterio.
 
 ## Fase 3: Extracción con IA
 
-- [ ] Dataset de 50-100 facturas reales y variadas, anotadas a mano en JSON
-- [ ] Interfaz `LLMProvider` con implementación para Claude
-- [ ] Clasificación: factura recibida, emitida, albarán, presupuesto, ticket u otro (→ `IGNORED`)
-- [ ] Esquema de salida estructurada con confianza por campo
-- [ ] Texto si el PDF tiene capa de texto; imagen si es escaneo o foto
-- [ ] Reintentos, timeout y `FAILED` con motivo; guardar modelo, tokens, coste y tiempo
-- [ ] Comando `invoices:eval` con precisión por campo, coste y tiempo medios
+### 3.1 Dataset de prueba (lo primero)
 
-**Criterio de salida:** más del 95 % en los campos clave y coste por factura conocido.
+- [ ] Reunir 50-100 facturas reales y variadas (anonimizadas si no son tuyas)
+- [ ] Anotar a mano el resultado correcto de cada una en su `.json`
+
+Formato e instrucciones: [evaluacion.md](evaluacion.md). Va en `storage/app/eval/dataset/` (fuera de git).
+
+### 3.2 Integración con el LLM
+
+- [x] Interfaz `LLMProvider` con implementación para Claude (`ClaudeProvider`, SDK oficial de PHP)
+- [x] Clasificación: factura, ticket, rectificativa, albarán, presupuesto u otro
+      (`other` → `IGNORED`; albarán y presupuesto → `NEEDS_REVIEW`)
+- [x] Salida estructurada (JSON schema): proveedor, cliente, CIF/NIF, número, fechas, desglose de IVA
+      por tipo (con recargo de equivalencia), IRPF, total, moneda y líneas
+- [x] Confianza por campo (alta, media o baja) y nota cuando algo no se lee bien
+- [x] Entrada: texto si el PDF tiene capa de texto; PDF si es escaneo; imagen (reducida) si es foto; HEIC → JPG
+- [x] Reintentos con espera creciente, timeout y `FAILED` con el motivo; rechazos del modelo a revisión
+- [x] Guardar por documento el modelo, los tokens, el coste y el tiempo (`document_extractions`)
+
+### 3.3 Evaluación
+
+- [x] Comando `invoices:eval`: precisión por campo, coste medio y tiempo medio (y p95), con informe JSON
+- [ ] Ejecutarlo con el dataset real y apuntar la línea base
+- [ ] Iterar el prompt y el esquema hasta que CIF, fecha, base, IVA y total superen el 95 %
+- [ ] Comparar modelo y esfuerzo (`--model`, `--effort`) para fijar el coste por factura
+
+**Criterio de salida:** el informe de evaluación da más del 95 % en los campos clave y sabes el coste por factura.
+
+## Fase 4: Validación y reglas
+
+- [ ] Comprobación aritmética (bases + IVA − retención = total, ±0,02 €)
+- [ ] Formato y dígito de control de CIF, NIF y NIE
+- [ ] Tipos de IVA válidos y base coherente con cada tipo
+- [ ] Fechas lógicas; recibida o emitida según el CIF de la `Company`
+- [ ] Duplicado de negocio (CIF + número + total) y memoria por proveedor (`Supplier`)
+- [ ] Umbral de confianza configurable por cuenta y motivo legible por regla
+
+**Criterio de salida:** con el dataset de la fase 3, las facturas con errores van a revisión y al menos el 70 % sale sola.
