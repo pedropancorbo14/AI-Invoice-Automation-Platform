@@ -106,6 +106,10 @@ class ExtractionSchema
             - tax_id: el CIF, NIF, NIE o NIF-IVA tal como aparece.
             - Fechas en formato AAAA-MM-DD. Si el día y el mes son ambiguos, usa el
               formato español (día/mes/año) y dilo en notes.
+            - due_date: la fecha de vencimiento o de pago que aparezca impresa. En
+              recibos domiciliados (luz, agua, teléfono...) la «fecha de cargo» es el
+              vencimiento. Si no hay ninguna fecha de pago, null; no la calcules a
+              partir de la forma de pago.
             - Importes como números con punto decimal: "1.234,56 €" es 1234.56.
             - tax_breakdown: una entrada por tipo de IVA (o IGIC), con su base y su
               cuota. Si hay recargo de equivalencia, va en surcharge_rate y
@@ -120,6 +124,10 @@ class ExtractionSchema
             - high: se lee con claridad y no hay otra interpretación posible.
             - medium: se lee, pero hay alguna duda (borroso, dos candidatos...).
             - low: es una deducción o casi no se lee.
+            La confianza mide si has leído bien el dato, no si el documento es
+            coherente. En las fechas, si la lees con claridad, es high aunque no
+            encaje con la forma de pago (por ejemplo, «contado» o «60 días»): esa
+            incoherencia anótala en notes, que la revisan las reglas.
             Cada vez que un campo no sea high, explica el motivo en notes, en español
             y en una frase.
             PROMPT;
