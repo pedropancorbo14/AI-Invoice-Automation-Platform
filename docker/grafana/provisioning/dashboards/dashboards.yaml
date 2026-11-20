@@ -1,0 +1,13 @@
+# Carga los dashboards de docker/grafana/dashboards al arrancar.
+# Los cambios hechos desde la web no se guardan en el repositorio: para
+# conservarlos, exporta el JSON y sustituye el fichero (docs/grafana.md).
+apiVersion: 1
+
+providers:
+  - name: Facturas IA
+    folder: Facturas IA
+    type: file
+    disableDeletion: true
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/dashboards

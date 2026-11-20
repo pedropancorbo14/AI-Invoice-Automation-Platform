@@ -106,6 +106,8 @@ Formato e instrucciones: [evaluacion.md](evaluacion.md). Va en `storage/app/eval
 - [x] Extra: atajos de teclado, salto automático a la siguiente, comprobación del total en vivo
       y aviso si al aprobar algo sigue sin cuadrar
 - [x] Extra: cuenta demo con facturas ficticias (adelanta parte de la fase 7)
+- [x] Extra: Grafana solo para el operador con el uso y el coste de IA de todas las cuentas
+      ([grafana.md](grafana.md)), con un usuario de PostgreSQL de solo lectura
 
 **Criterio de salida:** revisar y aprobar una factura dudosa en menos de 30 segundos y el resumen
 por email llega bien. ✅ Prueba en navegador: corregir el total + `Ctrl+Enter` aprueba y carga la

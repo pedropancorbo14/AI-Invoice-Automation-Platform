@@ -29,6 +29,7 @@ y solo se cambia de estado con `$document->transitionTo(...)`.
 | Almacenamiento privado por cuenta | `App\Actions\StoreDocument`, disco `documents` |
 | API autenticada con tokens | Sanctum, `routes/api.php` |
 | Colas | Redis + Horizon |
+| Uso y costes (operador) | Grafana sobre PostgreSQL con un usuario de solo lectura ([grafana.md](grafana.md)) |
 
 **Aislamiento entre cuentas: dos capas.**
 1. **Global scope** (`BelongsToAccount`): toda consulta se filtra por la cuenta

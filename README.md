@@ -118,7 +118,8 @@ Caddy · Pest, Larastan nivel 8, Pint, Vitest y GitHub Actions.
 
 **Documentación:** [arquitectura y API](docs/arquitectura.md) ·
 [evaluación de la IA](docs/evaluacion.md) · [Holded](docs/holded.md) ·
-[despliegue](docs/despliegue.md) · [guía de reenvío para clientes](docs/guia-reenvio.md) ·
+[despliegue](docs/despliegue.md) · [Grafana](docs/grafana.md) ·
+[guía de reenvío para clientes](docs/guia-reenvio.md) ·
 [hoja de ruta](docs/ROADMAP.md).
 
 ## Probarlo en local (Docker)
@@ -137,6 +138,7 @@ docker compose run --rm assets        # compila el panel (o: npm install && npm 
 - App: http://localhost:8080 (subida manual en `/subir`)
 - Horizon (colas): http://localhost:8080/horizon
 - Mailpit (emails salientes): http://localhost:8025
+- Grafana (uso y costes, solo para el operador): http://localhost:3000 (`admin` / `admin`)
 
 Cuenta demo: `admin@demo.test` / `password` (admin) y `revisor@demo.test` / `password`.
 Trae facturas ficticias: unas validadas solas y otras pendientes de revisar por

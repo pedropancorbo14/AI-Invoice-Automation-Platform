@@ -1,0 +1,20 @@
+# Conexión de Grafana a PostgreSQL con el usuario de solo lectura
+# (lo crea el servicio grafana-db con docker/grafana/readonly-user.sql).
+apiVersion: 1
+
+datasources:
+  - name: Facturas IA
+    uid: facturas-pg
+    type: grafana-postgresql-datasource
+    url: postgres:5432
+    user: grafana_reader
+    isDefault: true
+    editable: false
+    jsonData:
+      database: ${GRAFANA_DB_NAME}
+      sslmode: disable
+      postgresVersion: 1500
+      timescaledb: false
+      maxOpenConns: 5
+    secureJsonData:
+      password: ${GRAFANA_DB_PASSWORD}
