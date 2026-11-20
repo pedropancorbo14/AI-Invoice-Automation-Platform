@@ -61,7 +61,7 @@ stateDiagram-v2
 
 | Pendientes de revisar | Métricas del mes |
 |---|---|
-| ![Bandeja de pendientes con el motivo de cada factura](docs/images/bandeja.png) | ![Métricas: recibidas, % automático, motivos y coste de IA](docs/images/metricas.png) |
+| ![Bandeja de pendientes con el motivo de cada factura](docs/images/bandeja.png) | ![Métricas: recibidas, % automático, pendientes y motivos de revisión](docs/images/metricas.png) |
 
 | Revisión (documento y datos) | Exportar y conectar Holded | Móvil |
 |---|---|---|

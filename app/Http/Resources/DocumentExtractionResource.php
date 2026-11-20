@@ -25,7 +25,6 @@ class DocumentExtractionResource extends JsonResource
             'notes' => $this->notes,
             'model' => $this->model,
             'input_mode' => $this->input_mode->value,
-            'cost_usd' => (float) $this->cost_usd,
             'duration_ms' => $this->duration_ms,
             'created_at' => $this->created_at->toIso8601String(),
         ];

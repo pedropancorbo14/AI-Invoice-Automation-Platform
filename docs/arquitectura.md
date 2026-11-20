@@ -153,7 +153,8 @@ que usa la misma API con la sesión del navegador (Sanctum en modo SPA):
   pide confirmación. Cada campo corregido queda en la auditoría (antes, después,
   quién) y la memoria del proveedor guarda la cuenta contable y la categoría.
 - **Métricas** del mes: facturas recibidas, % validado sin intervención,
-  pendientes, motivos de revisión más frecuentes y coste de IA.
+  pendientes y motivos de revisión más frecuentes. El coste de la IA no se
+  enseña al cliente (ni en la API); es solo para el operador.
 - **Resumen por email** (diario o semanal, configurable por cuenta): "Se
   procesaron X facturas; Y necesitan revisión", con enlace directo. Si no hay
   pendientes no se manda nada.

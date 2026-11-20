@@ -17,7 +17,6 @@ async function load() {
 
 const automaticRate = computed(() => metrics.value?.validated.automatic_rate);
 const maxReason = computed(() => Math.max(1, ...(metrics.value?.review_reasons ?? []).map((r) => r.count)));
-const usd = (value) => (value === null || value === undefined ? '—' : `$${Number(value).toFixed(value < 0.1 ? 4 : 2)}`);
 
 onMounted(load);
 watch(month, load);
@@ -35,7 +34,7 @@ watch(month, load);
     <p v-if="error" class="card p-4 text-sm text-red-600">{{ error }}</p>
 
     <template v-else-if="metrics">
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="grid gap-4 sm:grid-cols-3">
             <div class="card p-5">
                 <p class="text-sm text-slate-500 dark:text-slate-400">Facturas recibidas</p>
                 <p class="mt-1 text-3xl font-semibold tabular-nums">{{ metrics.received }}</p>
@@ -49,11 +48,6 @@ watch(month, load);
                 <p class="text-sm text-slate-500 dark:text-slate-400">Pendientes ahora</p>
                 <p class="mt-1 text-3xl font-semibold tabular-nums" :class="metrics.pending_review ? 'text-amber-600' : ''">{{ metrics.pending_review }}</p>
             </RouterLink>
-            <div class="card p-5">
-                <p class="text-sm text-slate-500 dark:text-slate-400">Coste de IA</p>
-                <p class="mt-1 text-3xl font-semibold tabular-nums">{{ usd(metrics.ai.cost_usd) }}</p>
-                <p class="mt-1 text-xs text-slate-500">{{ usd(metrics.ai.avg_cost_usd) }} por documento · {{ metrics.ai.extractions }} extracciones</p>
-            </div>
         </div>
 
         <div class="card mt-4 p-5">
