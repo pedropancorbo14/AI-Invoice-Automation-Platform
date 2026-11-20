@@ -52,6 +52,9 @@ cumplir su criterio.
 
 Formato e instrucciones: [evaluacion.md](evaluacion.md). Va en `storage/app/eval/dataset/` (fuera de git).
 
+- [x] Mientras tanto: generador de un dataset sintético de unas 80 facturas ficticias anotadas
+      (`tools/eval-dataset/generate.mjs`) para ajustar el prompt y las reglas. No sustituye al real.
+
 ### 3.2 Integración con el LLM
 
 - [x] Interfaz `LLMProvider` con implementación para Claude (`ClaudeProvider`, SDK oficial de PHP)

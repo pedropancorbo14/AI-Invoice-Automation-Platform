@@ -30,6 +30,43 @@ contrato) para comprobar que se clasifican bien.
 Si no son tuyas, **anonimízalas** (tapa nombres de personas físicas, direcciones
 y cuentas bancarias), y anota la verdad sobre la versión anonimizada.
 
+### Mientras no tengas facturas reales: dataset sintético
+
+`tools/eval-dataset/generate.mjs` crea unas 80 facturas **ficticias** con su
+`.json` ya anotado, imitando lo que llega a una gestoría:
+
+- **Formatos:** PDF digital (con texto), escaneo (PDF solo imagen, torcido,
+  gris y con ruido), foto de móvil (perspectiva, sombras y desenfoque) y
+  captura de pantalla.
+- **Diseños:** 10 plantillas (clásica, moderna, ERP con cuadro de impuestos,
+  Word de autónomo, factura de luz, agua y teléfono, ticket de TPV, SaaS en
+  inglés...) con etiquetas, formatos de fecha e importe y paginación variables.
+- **Casos fiscales:** varios tipos de IVA, recargo de equivalencia, IRPF del
+  15, 7 y 19 %, exentas, conceptos no sujetos, descuentos por línea y globales,
+  rectificativas en negativo, inversión del sujeto pasivo, USD, facturas
+  emitidas y de varias páginas.
+- **Trampas:** errores del proveedor (total que no cuadra, CIF con el control
+  mal, IVA al 18 %) y documentos que no son facturas (albarán, presupuesto,
+  proforma, contrato, nómina, publicidad).
+
+Las empresas, los CIF y las personas son inventados, y los CIF y NIF tienen un
+dígito de control válido. La verdad es siempre lo que pone el papel, aunque
+esté mal. Solo necesita Node y Playwright con Chromium:
+
+```bash
+npm install --no-save playwright && npx playwright install chromium
+node tools/eval-dataset/generate.mjs                  # → storage/app/eval/synthetic
+node tools/eval-dataset/generate.mjs --seed=7         # otro dataset distinto
+php artisan invoices:eval --dataset=storage/app/eval/synthetic
+```
+
+Sirve para ajustar el prompt y las reglas, para compararlas entre modelos y
+para detectar regresiones. **No sustituye al dataset real:** está generado por
+ordenador, así que es más limpio y más regular que el papel de verdad (sin
+sellos, sin texto a mano, sin arrugas de verdad ni diseños rarísimos). Un 98 %
+aquí no garantiza un 95 % con clientes reales. No publiques estos resultados
+como si fueran reales: en el README, di siempre que son sintéticos.
+
 ## 2. Anotar la verdad
 
 Cada factura lleva al lado un `.json` con el mismo nombre:
