@@ -7,14 +7,13 @@ use App\Enums\DocumentStatus;
 use App\Models\Account;
 use App\Models\Document;
 use App\Models\DocumentEvent;
-use App\Models\DocumentExtraction;
-use App\Support\Extraction\InputMode;
 use App\Support\Review\ReviewCode;
 use Carbon\CarbonImmutable;
 
 /**
- * Las cifras del panel: cuánto entra, cuánto sale solo, por qué se revisa y
- * cuánto cuesta la IA.
+ * Las cifras del panel del cliente: cuánto entra, cuánto sale solo y por qué
+ * se revisa. El coste de la IA no se enseña al cliente: es solo para el
+ * operador.
  */
 class AccountMetrics
 {
@@ -44,14 +43,6 @@ class AccountMetrics
         }
         arsort($reasons);
 
-        $extractions = DocumentExtraction::withoutGlobalScopes()
-            ->where('account_id', $account->id)
-            ->where('input_mode', '!=', InputMode::Manual)
-            ->whereBetween('created_at', [$from, $to]);
-
-        $extractionCount = (clone $extractions)->count();
-        $cost = (float) (clone $extractions)->sum('cost_usd');
-
         $byStatus = [];
         foreach ((clone $documents)->toBase()->selectRaw('status, count(*) as total')->groupBy('status')->get() as $row) {
             $byStatus[(string) $row->status] = (int) $row->total;
@@ -73,11 +64,6 @@ class AccountMetrics
                 array_keys($reasons),
                 array_values($reasons),
             ),
-            'ai' => [
-                'extractions' => $extractionCount,
-                'cost_usd' => round($cost, 4),
-                'avg_cost_usd' => $extractionCount === 0 ? null : round($cost / $extractionCount, 5),
-            ],
         ];
     }
 

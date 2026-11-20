@@ -102,7 +102,8 @@ Formato e instrucciones: [evaluacion.md](evaluacion.md). Va en `storage/app/eval
 - [x] Al aprobar: actualizar la memoria del proveedor (cuenta contable y categoría) y pasar a `VALIDATED`
 - [x] Auditoría de cada corrección: campo, antes, después y quién
 - [x] Resumen por email diario o semanal (configurable); no se manda si no hay pendientes
-- [x] Panel de métricas: facturas procesadas, % automático, motivos de revisión y coste de IA del mes
+- [x] Panel de métricas: facturas procesadas, % automático y motivos de revisión del mes
+      (el coste de IA no se enseña al cliente)
 - [x] Extra: atajos de teclado, salto automático a la siguiente, comprobación del total en vivo
       y aviso si al aprobar algo sigue sin cuadrar
 - [x] Extra: cuenta demo con facturas ficticias (adelanta parte de la fase 7)

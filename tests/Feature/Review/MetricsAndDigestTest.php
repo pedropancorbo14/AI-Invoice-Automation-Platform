@@ -39,7 +39,7 @@ function accountWithActivity(): array
     return [$admin, $company];
 }
 
-it('summarizes the month: received, automatic rate, reasons and AI cost', function () {
+it('summarizes the month: received, automatic rate and reasons', function () {
     [$admin] = accountWithActivity();
     actingAsUser($admin);
 
@@ -48,18 +48,20 @@ it('summarizes the month: received, automatic rate, reasons and AI cost', functi
         ->assertJsonPath('data.received', 4)
         ->assertJsonPath('data.validated', ['automatic' => 1, 'manual' => 1, 'automatic_rate' => 50])
         ->assertJsonPath('data.pending_review', 2)
-        ->assertJsonPath('data.review_reasons.0', ['code' => 'arithmetic', 'label' => 'El total no cuadra', 'count' => 2])
-        ->assertJsonPath('data.ai.extractions', 4)
-        ->assertJsonPath('data.ai.cost_usd', 0.04)
-        ->assertJsonPath('data.ai.avg_cost_usd', 0.01);
+        ->assertJsonPath('data.review_reasons.0', ['code' => 'arithmetic', 'label' => 'El total no cuadra', 'count' => 2]);
 });
 
-it('does not count manual corrections as AI cost', function () {
+it('never shows the AI cost to the client', function () {
     [$admin] = accountWithActivity();
-    DocumentExtraction::withoutGlobalScopes()->first()->replicate()->fill(['input_mode' => 'manual', 'cost_usd' => 5])->save();
     actingAsUser($admin);
 
-    $this->getJson('/api/metrics?month=2026-11')->assertJsonPath('data.ai.cost_usd', 0.04);
+    $this->getJson('/api/metrics?month=2026-11')->assertOk()->assertJsonMissingPath('data.ai');
+
+    $document = DocumentExtraction::withoutGlobalScopes()->firstOrFail()->document_id;
+    $this->getJson("/api/documents/{$document}")
+        ->assertOk()
+        ->assertJsonPath('data.extraction.model', 'fake-model')
+        ->assertJsonMissingPath('data.extraction.cost_usd');
 });
 
 it('only shows the metrics of the own account', function () {
