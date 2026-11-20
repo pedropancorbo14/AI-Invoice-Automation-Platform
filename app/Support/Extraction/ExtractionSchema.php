@@ -39,7 +39,10 @@ class ExtractionSchema
             'invoice_number' => $nullableString,
             'issue_date' => $nullableDate,
             'due_date' => $nullableDate,
-            'currency' => $nullableString,
+            // Texto obligatorio, no nullable: la API admite como máximo 16
+            // campos con unión (anyOf) en el esquema, y la moneda tiene un
+            // valor por defecto claro (EUR).
+            'currency' => ['type' => 'string'],
             'tax_breakdown' => [
                 'type' => 'array',
                 'items' => self::object([
@@ -110,7 +113,7 @@ class ExtractionSchema
             - withholding: la retención de IRPF, con el importe en positivo.
             - total: el importe final a pagar, tal como aparece en el documento.
             - lines: las líneas de detalle si se leen bien; si no, una lista vacía.
-            - currency: código ISO 4217 (EUR, USD...).
+            - currency: código ISO 4217 (EUR, USD...). Si no aparece, EUR.
             - Si un dato no aparece o no se lee, déjalo en null.
 
             Confianza (confidence) por campo:

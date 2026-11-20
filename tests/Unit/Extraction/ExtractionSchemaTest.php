@@ -66,3 +66,22 @@ it('builds a schema where every object is closed and fully required', function (
 
     $check(ExtractionSchema::jsonSchema());
 });
+
+it('keeps union-typed fields within the API limit of 16', function () {
+    // La API rechaza con un 400 los esquemas con más de 16 campos de tipo
+    // unión (anyOf o lista de tipos): cuenta cada aparición, también las repetidas.
+    $count = function (array $node) use (&$count): int {
+        $own = isset($node['anyOf']) || is_array($node['type'] ?? null) ? 1 : 0;
+        $children = [...array_values($node['properties'] ?? []), ...(isset($node['items']) ? [$node['items']] : [])];
+
+        return $own + array_sum(array_map($count, $children));
+    };
+
+    expect($count(ExtractionSchema::jsonSchema()))->toBeLessThanOrEqual(16);
+});
+
+it('defaults a missing currency to EUR', function () {
+    $output = FakeAnthropicApi::invoiceOutput(['currency' => '']);
+
+    expect(ExtractionSchema::normalize($output)['data']['currency'])->toBe('EUR');
+});
