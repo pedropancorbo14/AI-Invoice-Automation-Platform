@@ -79,6 +79,46 @@ services:
     ports:
       - "${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025"
 
+  # Usuario de solo lectura para Grafana. Se ejecuta en cada arranque y termina.
+  grafana-db:
+    image: postgres:17-alpine
+    environment:
+      PGHOST: postgres
+      PGDATABASE: ${DB_DATABASE:-invoices}
+      PGUSER: ${DB_USERNAME:-invoices}
+      PGPASSWORD: ${DB_PASSWORD:-secret}
+      GRAFANA_DB_PASSWORD: ${GRAFANA_DB_PASSWORD:-grafana}
+    volumes:
+      - ./docker/grafana/readonly-user.sql:/readonly-user.sql:ro
+    command: sh -c 'psql -q -v ON_ERROR_STOP=1 -v grafana_password="$$GRAFANA_DB_PASSWORD" -f /readonly-user.sql'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Uso y costes de todas las cuentas: http://localhost:3000 (docs/grafana.md)
+  grafana:
+    image: grafana/grafana:11.6.0
+    ports:
+      - "${FORWARD_GRAFANA_PORT:-3000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/uso.json
+      GRAFANA_DB_NAME: ${DB_DATABASE:-invoices}
+      GRAFANA_DB_PASSWORD: ${GRAFANA_DB_PASSWORD:-grafana}
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./docker/grafana/dashboards:/etc/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      grafana-db:
+        condition: service_completed_successfully
+
 volumes:
   postgres-data:
   redis-data:
+  grafana-data:

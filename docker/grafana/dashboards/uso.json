@@ -1,0 +1,1610 @@
+{
+  "uid": "facturas-uso",
+  "title": "Facturas IA · Uso y costes",
+  "description": "Uso de la plataforma y coste de la IA, de todas las cuentas. Solo para el operador.",
+  "tags": [
+    "facturas-ia"
+  ],
+  "timezone": "Europe/Madrid",
+  "weekStart": "monday",
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "5m",
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "timepicker": {},
+  "schemaVersion": 39,
+  "version": 1,
+  "fiscalYearStartMonth": 0,
+  "liveNow": false,
+  "links": [],
+  "annotations": {
+    "list": []
+  },
+  "templating": {
+    "list": [
+      {
+        "type": "query",
+        "name": "account",
+        "label": "Cuenta",
+        "datasource": {
+          "type": "grafana-postgresql-datasource",
+          "uid": "facturas-pg"
+        },
+        "query": "SELECT id AS __value, name AS __text FROM accounts ORDER BY name",
+        "definition": "SELECT id AS __value, name AS __text FROM accounts ORDER BY name",
+        "refresh": 2,
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "sort": 0,
+        "hide": 0,
+        "options": []
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "id": 1,
+      "title": "Resumen del periodo",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "id": 2,
+      "title": "Documentos recibidos",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT count(*) AS \"Documentos\" FROM documents WHERE $__timeFilter(created_at) AND account_id IN ($account)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "type": "stat",
+      "id": 3,
+      "title": "Validados sin intervención",
+      "description": "De las facturas validadas en el periodo, cuántas pasaron solas sin que nadie las tocara.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT round(100.0 * count(*) FILTER (WHERE user_id IS NULL) / NULLIF(count(*), 0), 1) AS \"Automático\"\nFROM document_events\nWHERE type = 'status_changed' AND to_status = 'validated' AND $__timeFilter(created_at) AND account_id IN ($account)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 50
+              },
+              {
+                "color": "green",
+                "value": 70
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "type": "stat",
+      "id": 4,
+      "title": "Pendientes de revisión ahora",
+      "description": "Estado actual, no depende del periodo.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT count(*) AS \"Pendientes\" FROM documents WHERE status = 'needs_review' AND account_id IN ($account)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 20
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "type": "stat",
+      "id": 5,
+      "title": "Coste de IA",
+      "description": "Suma del coste de cada extracción con IA. No incluye las correcciones manuales.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT coalesce(sum(cost_usd), 0) AS \"Coste\" FROM document_extractions WHERE input_mode <> 'manual' AND $__timeFilter(created_at) AND account_id IN ($account)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "type": "stat",
+      "id": 6,
+      "title": "Coste medio por documento",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT avg(cost_usd) AS \"Medio\" FROM document_extractions WHERE input_mode <> 'manual' AND $__timeFilter(created_at) AND account_id IN ($account)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 4,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "type": "stat",
+      "id": 7,
+      "title": "Coste previsto del mes",
+      "description": "Lo gastado en lo que va de mes, extrapolado al mes completo. No depende del periodo elegido.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 1
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT coalesce(sum(cost_usd), 0)\n       / EXTRACT(day FROM now() AT TIME ZONE 'UTC')\n       * EXTRACT(day FROM date_trunc('month', now() AT TIME ZONE 'UTC') + interval '1 month - 1 day') AS \"Previsto\"\nFROM document_extractions\nWHERE input_mode <> 'manual' AND created_at >= date_trunc('month', now() AT TIME ZONE 'UTC') AND account_id IN ($account)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "purple"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "type": "row",
+      "id": 8,
+      "title": "Volumen",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "id": 9,
+      "title": "Documentos recibidos por día",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT $__timeGroupAlias(created_at, '1d', 0),\n       CASE source WHEN 'email' THEN 'Email' WHEN 'upload' THEN 'Subida manual' ELSE source END AS metric,\n       count(*) AS value\nFROM documents\nWHERE $__timeFilter(created_at) AND account_id IN ($account)\nGROUP BY 1, 2 ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "spanNulls": false
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "piechart",
+      "id": 10,
+      "title": "Documentos por estado actual",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT CASE status\n    WHEN 'received' THEN 'Recibido' WHEN 'classified' THEN 'Clasificado' WHEN 'extracted' THEN 'Extraído'\n    WHEN 'validated' THEN 'Validado' WHEN 'exported' THEN 'Exportado' WHEN 'needs_review' THEN 'En revisión'\n    WHEN 'ignored' THEN 'Ignorado' WHEN 'failed' THEN 'Fallido' ELSE status END AS \"Estado\", count(*) AS \"Documentos\"\nFROM documents WHERE $__timeFilter(created_at) AND account_id IN ($account)\nGROUP BY 1 ORDER BY 2 DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "pieType": "donut",
+        "displayLabels": [
+          "percent"
+        ],
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value"
+          ]
+        }
+      }
+    },
+    {
+      "type": "piechart",
+      "id": 11,
+      "title": "Correos entrantes",
+      "description": "Incluye los correos que no se pudieron asignar a ninguna cuenta.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 6
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT CASE status\n    WHEN 'pending' THEN 'Pendiente' WHEN 'processed' THEN 'Procesado' WHEN 'no_documents' THEN 'Sin adjuntos'\n    WHEN 'unrouted' THEN 'Sin destinatario' WHEN 'forwarding_confirmation' THEN 'Confirmación de reenvío'\n    WHEN 'failed' THEN 'Fallido' ELSE status END AS \"Estado\", count(*) AS \"Correos\"\nFROM inbound_emails WHERE $__timeFilter(created_at) AND (account_id IS NULL OR account_id IN ($account))\nGROUP BY 1 ORDER BY 2 DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "pieType": "donut",
+        "displayLabels": [
+          "percent"
+        ],
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value"
+          ]
+        }
+      }
+    },
+    {
+      "type": "row",
+      "id": 12,
+      "title": "IA: coste y rendimiento",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "id": 13,
+      "title": "Coste diario por modelo",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 15
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT $__timeGroupAlias(created_at, '1d', 0), model AS metric, sum(cost_usd) AS value\nFROM document_extractions\nWHERE input_mode <> 'manual' AND $__timeFilter(created_at) AND account_id IN ($account)\nGROUP BY 1, 2 ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 2,
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            },
+            "spanNulls": false
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "id": 14,
+      "title": "Tokens por día",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 15
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT $__timeGroupAlias(created_at, '1d', 0),\n       sum(input_tokens) AS \"Entrada\", sum(output_tokens) AS \"Salida\",\n       sum(cache_read_tokens) AS \"Leídos de caché\"\nFROM document_extractions\nWHERE input_mode <> 'manual' AND $__timeFilter(created_at) AND account_id IN ($account)\nGROUP BY 1 ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "spanNulls": false
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "timeseries",
+      "id": 15,
+      "title": "Tiempo de extracción",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 23
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT $__timeGroupAlias(created_at, '1d'),\n       avg(duration_ms) / 1000.0 AS \"Media\",\n       percentile_cont(0.95) WITHIN GROUP (ORDER BY duration_ms) / 1000.0 AS \"p95\"\nFROM document_extractions\nWHERE input_mode <> 'manual' AND $__timeFilter(created_at) AND account_id IN ($account)\nGROUP BY 1 ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1,
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "spanNulls": false
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "piechart",
+      "id": 16,
+      "title": "Extracciones por tipo de entrada",
+      "description": "El texto de un PDF digital es mucho más barato que mandar el PDF escaneado o una foto.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 23
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT CASE input_mode WHEN 'text' THEN 'Texto del PDF' WHEN 'pdf' THEN 'PDF escaneado' WHEN 'image' THEN 'Imagen' ELSE input_mode END AS \"Entrada\",\n       count(*) AS \"Extracciones\"\nFROM document_extractions WHERE input_mode <> 'manual' AND $__timeFilter(created_at) AND account_id IN ($account)\nGROUP BY 1 ORDER BY 2 DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "pieType": "donut",
+        "displayLabels": [
+          "percent"
+        ],
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value"
+          ]
+        }
+      }
+    },
+    {
+      "type": "table",
+      "id": 17,
+      "title": "Coste por tipo de entrada",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 23
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT CASE input_mode WHEN 'text' THEN 'Texto del PDF' WHEN 'pdf' THEN 'PDF escaneado' WHEN 'image' THEN 'Imagen' ELSE input_mode END AS \"Entrada\",\n       count(*) AS \"Extracciones\", avg(cost_usd) AS \"Coste medio\", sum(cost_usd) AS \"Coste total\"\nFROM document_extractions WHERE input_mode <> 'manual' AND $__timeFilter(created_at) AND account_id IN ($account)\nGROUP BY 1 ORDER BY 4 DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Coste medio"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 4
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Coste total"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "countRows": false
+        }
+      }
+    },
+    {
+      "type": "row",
+      "id": 18,
+      "title": "Revisión",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 31
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "id": 19,
+      "title": "Facturas validadas por día",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT $__timeGroupAlias(created_at, '1d', 0),\n       count(*) FILTER (WHERE user_id IS NULL) AS \"Solas\",\n       count(*) FILTER (WHERE user_id IS NOT NULL) AS \"Revisadas por una persona\"\nFROM document_events\nWHERE type = 'status_changed' AND to_status = 'validated' AND $__timeFilter(created_at) AND account_id IN ($account)\nGROUP BY 1 ORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Solas"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Revisadas por una persona"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      }
+    },
+    {
+      "type": "barchart",
+      "id": 20,
+      "title": "Motivos de revisión",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 12,
+        "y": 32
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT CASE code\n    WHEN 'required' THEN 'Faltan datos' WHEN 'currency' THEN 'Otra moneda' WHEN 'tax_id' THEN 'CIF/NIF no válido'\n    WHEN 'dates' THEN 'Fechas' WHEN 'tax_rates' THEN 'Tipos de IVA' WHEN 'arithmetic' THEN 'El total no cuadra'\n    WHEN 'direction' THEN 'No es de este cliente' WHEN 'confidence' THEN 'Datos dudosos'\n    WHEN 'duplicate' THEN 'Posible duplicado' WHEN 'new_supplier' THEN 'Proveedor nuevo'\n    WHEN 'link_invoice' THEN 'Factura por enlace' WHEN 'unreadable' THEN 'No se puede leer'\n    WHEN 'ai_refused' THEN 'La IA no lo procesó' WHEN 'not_invoice' THEN 'Albarán o presupuesto'\n    WHEN 'no_data' THEN 'Sin datos extraídos' WHEN 'export_failed' THEN 'Error al exportar' ELSE code END AS \"Motivo\", count(*) AS \"Veces\"\nFROM document_events e, json_array_elements_text(e.payload -> 'review_codes') AS code\nWHERE e.type = 'status_changed' AND e.to_status = 'needs_review' AND $__timeFilter(e.created_at) AND e.account_id IN ($account)\nGROUP BY 1 ORDER BY 2 DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          },
+          "custom": {
+            "fillOpacity": 80
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "horizontal",
+        "xTickLabelRotation": 0,
+        "showValue": "always",
+        "legend": {
+          "showLegend": false,
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "id": 21,
+      "title": "Tiempo medio hasta la revisión",
+      "description": "Desde que llega el documento hasta que una persona lo aprueba.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 20,
+        "y": 32
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT avg(EXTRACT(epoch FROM v.created_at - d.created_at)) AS \"Tiempo\"\nFROM document_events v JOIN documents d ON d.id = v.document_id\nWHERE v.type = 'status_changed' AND v.to_status = 'validated' AND v.user_id IS NOT NULL\n  AND $__timeFilter(v.created_at) AND v.account_id IN ($account)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 1,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "orange"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "type": "row",
+      "id": 22,
+      "title": "Exportación",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 40
+      },
+      "panels": []
+    },
+    {
+      "type": "piechart",
+      "id": 23,
+      "title": "Exportaciones por estado",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 41
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT CASE status WHEN 'exported' THEN 'Exportada' WHEN 'pending' THEN 'Pendiente' WHEN 'skipped' THEN 'Omitida' WHEN 'failed' THEN 'Fallida' ELSE status END AS \"Estado\",\n       count(*) AS \"Exportaciones\"\nFROM document_exports WHERE $__timeFilter(created_at) AND account_id IN ($account)\nGROUP BY 1 ORDER BY 2 DESC"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "pieType": "donut",
+        "displayLabels": [
+          "percent"
+        ],
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "values": [
+            "value"
+          ]
+        }
+      }
+    },
+    {
+      "type": "table",
+      "id": 24,
+      "title": "Últimos fallos de exportación",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 6,
+        "y": 41
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT x.created_at AS \"Fecha\", a.name AS \"Cuenta\", x.target AS \"Destino\", x.document_id AS \"Documento\",\n       x.attempts AS \"Intentos\", x.error AS \"Error\"\nFROM document_exports x JOIN accounts a ON a.id = x.account_id\nWHERE x.status = 'failed' AND $__timeFilter(x.created_at) AND x.account_id IN ($account)\nORDER BY x.created_at DESC LIMIT 50"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": false,
+          "reducer": [
+            "sum"
+          ],
+          "countRows": false
+        }
+      }
+    },
+    {
+      "type": "row",
+      "id": 25,
+      "title": "Uso por cliente",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 49
+      },
+      "panels": []
+    },
+    {
+      "type": "table",
+      "id": 26,
+      "title": "Uso por cuenta",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 50
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH docs AS (\n    SELECT account_id, count(*) AS n, max(created_at) AS last_at\n    FROM documents WHERE $__timeFilter(created_at) GROUP BY 1\n), val AS (\n    SELECT account_id, count(*) FILTER (WHERE user_id IS NULL) AS auto, count(*) AS total\n    FROM document_events\n    WHERE type = 'status_changed' AND to_status = 'validated' AND $__timeFilter(created_at) GROUP BY 1\n), ai AS (\n    SELECT account_id, sum(cost_usd) AS cost, avg(cost_usd) AS avg_cost\n    FROM document_extractions WHERE input_mode <> 'manual' AND $__timeFilter(created_at) GROUP BY 1\n)\nSELECT a.name AS \"Cuenta\",\n       (SELECT count(*) FROM companies c WHERE c.account_id = a.id) AS \"Empresas\",\n       (SELECT count(*) FROM users u WHERE u.account_id = a.id) AS \"Usuarios\",\n       coalesce(docs.n, 0) AS \"Documentos\",\n       round(100.0 * val.auto / NULLIF(val.total, 0), 1) AS \"% automático\",\n       (SELECT count(*) FROM documents p WHERE p.account_id = a.id AND p.status = 'needs_review') AS \"Pendientes\",\n       coalesce(ai.cost, 0) AS \"Coste IA\",\n       ai.avg_cost AS \"Coste por documento\",\n       docs.last_at AS \"Último documento\"\nFROM accounts a\nLEFT JOIN docs ON docs.account_id = a.id\nLEFT JOIN val ON val.account_id = a.id\nLEFT JOIN ai ON ai.account_id = a.id\nWHERE a.id IN ($account)\nORDER BY \"Coste IA\" DESC, a.name"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "% automático"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "decimals",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Coste IA"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Coste por documento"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              },
+              {
+                "id": "decimals",
+                "value": 4
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Último documento"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "dateTimeAsLocal"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": {
+          "show": true,
+          "reducer": [
+            "sum"
+          ],
+          "countRows": false,
+          "fields": [
+            "Documentos",
+            "Pendientes",
+            "Coste IA"
+          ]
+        }
+      }
+    },
+    {
+      "type": "row",
+      "id": 27,
+      "title": "Sistema",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 59
+      },
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "id": 28,
+      "title": "Documentos fallidos",
+      "description": "No se pudieron procesar (fichero ilegible, error de la IA...). Recibidos en el periodo.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 60
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT count(*) AS \"Fallidos\" FROM documents WHERE status = 'failed' AND $__timeFilter(created_at) AND account_id IN ($account)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "type": "stat",
+      "id": 29,
+      "title": "Trabajos de cola fallidos",
+      "description": "De todas las cuentas. El detalle está en Horizon.",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 60
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT count(*) AS \"Fallidos\" FROM failed_jobs WHERE $__timeFilter(failed_at)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "type": "stat",
+      "id": 30,
+      "title": "Cuentas con actividad",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 60
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT count(DISTINCT account_id) AS \"Cuentas\" FROM documents WHERE $__timeFilter(created_at) AND account_id IN ($account)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "type": "stat",
+      "id": 31,
+      "title": "Usuarios",
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "facturas-pg"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 60
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "grafana-postgresql-datasource",
+            "uid": "facturas-pg"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT count(*) AS \"Usuarios\" FROM users WHERE account_id IN ($account)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "text"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "textMode": "value",
+        "justifyMode": "center"
+      }
+    }
+  ]
+}

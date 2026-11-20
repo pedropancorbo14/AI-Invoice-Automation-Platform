@@ -102,3 +102,4 @@ con un almacenamiento compatible con S3 en la UE).
 - `/panel` carga y el candado del navegador está bien.
 - `docker compose -f compose.prod.yaml logs -f horizon scheduler` sin errores.
 - Horizon (`/horizon`) solo es accesible para los emails de `OPERATOR_EMAILS`.
+- Grafana (opcional, uso y costes): perfil `grafana`, solo por túnel SSH. Ver [grafana.md](grafana.md).
