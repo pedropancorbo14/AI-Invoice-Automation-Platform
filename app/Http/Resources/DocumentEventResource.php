@@ -23,6 +23,7 @@ class DocumentEventResource extends JsonResource
             'to_status' => $this->to_status?->value,
             'reason' => $this->reason,
             'user_id' => $this->user_id,
+            'user_name' => $this->whenLoaded('user', fn () => $this->user?->name),
             'payload' => $this->payload,
             'created_at' => $this->created_at->toIso8601String(),
         ];

@@ -39,7 +39,7 @@ function pick(event) {
         <div
             v-else-if="needsFile"
             class="absolute inset-0 flex flex-col items-center justify-center gap-4 p-8 text-center"
-            :class="over ? 'bg-sky-50 dark:bg-sky-950/40' : ''"
+            :class="over ? 'bg-brand-50 dark:bg-brand-950/40' : ''"
             @dragover.prevent="over = true"
             @dragleave="over = false"
             @drop.prevent="drop"
@@ -47,7 +47,7 @@ function pick(event) {
             <p class="text-lg font-medium">Factura por enlace</p>
             <ul v-if="links.length" class="space-y-1 text-sm">
                 <li v-for="link in links" :key="link">
-                    <a :href="link" target="_blank" rel="noopener noreferrer" class="break-all text-sky-600 hover:underline">{{ link }}</a>
+                    <a :href="link" target="_blank" rel="noopener noreferrer" class="link break-all">{{ link }}</a>
                 </li>
             </ul>
             <button type="button" class="btn btn-primary" :disabled="busy" @click="input.click()">Subir la factura</button>

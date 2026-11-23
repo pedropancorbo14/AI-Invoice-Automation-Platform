@@ -214,3 +214,45 @@ it('clears the review reasons once the document leaves review', function () {
 
     expect($document->fresh()->review_codes)->toBeNull();
 });
+
+describe('volver a procesar', function () {
+    it('sends an ignored or failed document back to the AI', function (DocumentStatus $status) {
+        Queue::fake();
+        config(['invoices.extraction.enabled' => true]);
+        $document = Document::factory()->forCompany($this->company)->create();
+        $document->transitionTo($status, 'Test.');
+
+        $this->postJson("/api/documents/{$document->id}/reprocess")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'received');
+
+        $last = $document->events()->reorder('id', 'desc')->first();
+        expect($last->user_id)->toBe($this->user->id)
+            ->and($last->reason)->toContain($this->user->name);
+        Queue::assertPushed(ExtractDocument::class, fn ($job) => $job->documentId === $document->id);
+    })->with([
+        'ignorado' => [DocumentStatus::Ignored],
+        'fallido' => [DocumentStatus::Failed],
+    ]);
+
+    it('refuses documents that are not ignored or failed', function () {
+        $document = Reviewable::document($this->company);
+
+        $this->postJson("/api/documents/{$document->id}/reprocess")->assertUnprocessable();
+        expect($document->refresh()->status)->toBe(DocumentStatus::NeedsReview);
+    });
+
+    it('refuses an email without the invoice: there is nothing to read again', function () {
+        $document = Document::factory()->forCompany($this->company)->create(['mime_type' => 'message/rfc822']);
+        $document->transitionTo(DocumentStatus::Ignored, 'Test.');
+
+        $this->postJson("/api/documents/{$document->id}/reprocess")->assertUnprocessable();
+    });
+
+    it('cannot touch documents from another account', function () {
+        $foreign = Document::factory()->create();
+        $foreign->transitionTo(DocumentStatus::Failed, 'Test.');
+
+        $this->postJson("/api/documents/{$foreign->id}/reprocess")->assertNotFound();
+    });
+});
