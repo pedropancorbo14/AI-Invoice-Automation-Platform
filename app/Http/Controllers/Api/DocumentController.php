@@ -9,6 +9,7 @@ use App\Models\Company;
 use App\Models\Document;
 use App\Models\User;
 use Illuminate\Container\Attributes\CurrentUser;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
@@ -29,17 +30,43 @@ class DocumentController extends Controller
             'review_code' => ['nullable', 'string', 'max:30'],
         ]);
 
-        $documents = Document::query()
-            ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status))
+        $scoped = Document::query()
             ->when($filters['company_id'] ?? null, fn ($q, $companyId) => $q->where('company_id', $companyId))
-            ->when($request->boolean('unassigned'), fn ($q) => $q->whereNull('company_id'))
+            ->when($request->boolean('unassigned'), fn ($q) => $q->whereNull('company_id'));
+
+        $documents = (clone $scoped)
+            ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status))
             ->when($filters['review_code'] ?? null, fn ($q, $code) => $q->whereJsonContains('review_codes', $code))
             // La bandeja de revisión va por orden de llegada; el resto, lo último primero.
             ->orderBy('id', ($filters['status'] ?? null) === DocumentStatus::NeedsReview->value ? 'asc' : 'desc')
             ->with(['latestExtraction', 'company'])
             ->paginate(50);
 
-        return DocumentResource::collection($documents);
+        return DocumentResource::collection($documents)->additional([
+            'meta' => ['status_counts' => $this->statusCounts($scoped)],
+        ]);
+    }
+
+    /**
+     * Cuántos documentos hay en cada estado (con el filtro de cliente, sin el de
+     * estado): alimenta las pestañas del listado. Siempre con todos los estados.
+     *
+     * @param  Builder<Document>  $query
+     * @return array<string, int>
+     */
+    private function statusCounts(Builder $query): array
+    {
+        $counts = $query->toBase()
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        $result = [];
+        foreach (DocumentStatus::cases() as $status) {
+            $result[$status->value] = (int) ($counts[$status->value] ?? 0);
+        }
+
+        return $result;
     }
 
     public function show(Document $document): DocumentResource
