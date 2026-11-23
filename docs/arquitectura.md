@@ -72,7 +72,8 @@ guarda el `.eml` original y encola un job por correo (`ProcessInboundEmail`):
 Cada correo queda en `inbound_emails` con su resumen (qué pasó con cada
 adjunto) y los documentos enlazan a su correo de origen.
 
-**Subida manual.** Página `/subir` (arrastrar y soltar) o `POST /api/documents`.
+**Subida manual.** En el panel (`/panel/subir`, también `/subir`): arrastrar, elegir o pegar
+ficheros, y se ve en directo qué hace la IA con cada uno. Por API, `POST /api/documents`.
 Mismas reglas: solo tipos válidos y sin duplicados.
 
 Guía para el cliente: [docs/guia-reenvio.md](guia-reenvio.md) (Gmail y Outlook).
@@ -194,7 +195,8 @@ VALIDATED → NEEDS_REVIEW   un destino la rechaza (clave caducada, datos...)
 | GET | `/api/companies` | Clientes de la cuenta |
 | POST | `/api/companies` | Crear cliente (solo admin) |
 | GET | `/api/companies/{id}` | Ver cliente (incluye su `inbox_address`) |
-| GET | `/api/documents` | Documentos (filtros: `status`, `company_id`, `unassigned`, `review_code`) |
+| GET | `/api/documents` | Documentos (filtros: `status`, `company_id`, `unassigned`, `review_code` y `q`, que busca por `#id`, fichero, proveedor, CIF o número). Incluye `meta.status_counts` |
+| GET | `/api/documents/counts` | Solo los recuentos por estado (el contador de pendientes del panel) |
 | POST | `/api/documents` | Subida manual (`files[]`, `company_id` opcional) |
 | GET | `/api/documents/{id}` | Documento con su auditoría y su última extracción |
 | GET | `/api/documents/{id}/file` | Descarga del original (nunca es público) |
@@ -203,6 +205,7 @@ VALIDATED → NEEDS_REVIEW   un destino la rechaza (clave caducada, datos...)
 | POST | `/api/documents/{id}/not-invoice` | Descartar: no es una factura |
 | POST | `/api/documents/{id}/duplicate` | Descartar: duplicado (`of_document_id`) |
 | POST | `/api/documents/{id}/file` | Adjuntar el fichero que faltaba y volver a extraer |
+| POST | `/api/documents/{id}/reprocess` | Volver a mandar a la IA un documento ignorado o fallido |
 | GET | `/api/companies/{id}/export?period=2026-T4&format=xlsx` | Libro de facturas del periodo (descarga) |
 | POST | `/api/companies/{id}/export/email` | Enviarlo por email (`period`, `format`, `email`) |
 | PUT / DELETE | `/api/companies/{id}/holded` | Conectar (`api_key`) o desconectar Holded (solo admin) |

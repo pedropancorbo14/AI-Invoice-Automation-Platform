@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Actions\Review\ApproveDocument;
 use App\Actions\Review\DiscardDocument;
 use App\Actions\Review\ReplaceDocumentFile;
+use App\Actions\Review\ReprocessDocument;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\DocumentResource;
 use App\Models\Document;
@@ -100,6 +101,17 @@ class DocumentReviewController extends Controller
         }
 
         return (new DocumentResource($document))->response();
+    }
+
+    public function reprocess(Document $document, ReprocessDocument $reprocess, #[CurrentUser] User $user): JsonResponse
+    {
+        Gate::authorize('update', $document);
+
+        try {
+            return (new DocumentResource($reprocess->handle($document, $user)))->response();
+        } catch (InvalidArgumentException $e) {
+            return $this->unprocessable($e->getMessage());
+        }
     }
 
     private function unprocessable(string $message): JsonResponse

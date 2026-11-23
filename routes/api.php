@@ -34,6 +34,7 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
     Route::delete('companies/{company}/holded', [HoldedConnectionController::class, 'destroy'])->name('companies.holded.destroy');
 
     Route::get('documents', [DocumentController::class, 'index'])->name('documents.index');
+    Route::get('documents/counts', [DocumentController::class, 'counts'])->name('documents.counts');
     Route::post('documents', DocumentUploadController::class)->name('documents.upload');
     Route::get('documents/{document}', [DocumentController::class, 'show'])->name('documents.show');
     Route::get('documents/{document}/file', [DocumentController::class, 'file'])->name('documents.file');
@@ -44,6 +45,7 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
     Route::post('documents/{document}/not-invoice', [DocumentReviewController::class, 'notInvoice'])->name('documents.not-invoice');
     Route::post('documents/{document}/duplicate', [DocumentReviewController::class, 'duplicate'])->name('documents.duplicate');
     Route::post('documents/{document}/file', [DocumentReviewController::class, 'replaceFile'])->name('documents.replace-file');
+    Route::post('documents/{document}/reprocess', [DocumentReviewController::class, 'reprocess'])->name('documents.reprocess');
 
     Route::get('inbound-emails', [InboundEmailController::class, 'index'])->name('inbound-emails.index');
     Route::get('inbound-emails/{inboundEmail}', [InboundEmailController::class, 'show'])->name('inbound-emails.show');

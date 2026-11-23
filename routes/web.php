@@ -1,9 +1,7 @@
 <?php
 
-use App\Http\Controllers\Api\DocumentUploadController;
 use App\Http\Controllers\Web\LoginController;
 use App\Http\Controllers\Web\PanelController;
-use App\Http\Controllers\Web\UploadPageController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -16,9 +14,9 @@ Route::middleware(['auth', 'tenant'])->group(function () {
     Route::redirect('/', '/panel');
     Route::post('logout', [LoginController::class, 'destroy'])->name('logout');
 
-    Route::get('subir', UploadPageController::class)->name('documents.upload.show');
+    // La subida manual vive en el panel; la dirección corta sigue funcionando.
+    Route::redirect('subir', '/panel/subir')->name('documents.upload.show');
 
-    // Panel de revisión (Vue). Todas sus rutas las resuelve el router del navegador.
+    // Panel (Vue). Todas sus rutas las resuelve el router del navegador.
     Route::get('panel/{any?}', PanelController::class)->where('any', '.*')->name('panel');
-    Route::post('subir', DocumentUploadController::class)->name('documents.upload.web');
 });

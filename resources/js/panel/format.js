@@ -11,6 +11,13 @@ export function date(value) {
     return `${d}/${m}/${y}`;
 }
 
+/** Fecha y hora completas, para el título (tooltip) de las fechas relativas. */
+export function dateTime(value) {
+    if (!value) return '';
+
+    return new Date(value).toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' });
+}
+
 export function ago(value) {
     if (!value) return '';
     const minutes = Math.round((Date.now() - new Date(value).getTime()) / 60000);
