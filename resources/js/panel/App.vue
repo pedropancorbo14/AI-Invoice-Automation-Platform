@@ -20,6 +20,7 @@ function csrf() {
                 <span class="hidden font-semibold sm:inline">Facturas IA</span>
                 <nav class="-mx-1 flex min-w-0 gap-1 overflow-x-auto px-1 text-sm">
                     <RouterLink to="/revisar" class="nav-link" active-class="nav-link-active">Pendientes</RouterLink>
+                    <RouterLink to="/facturas" class="nav-link" active-class="nav-link-active">Facturas</RouterLink>
                     <RouterLink to="/metricas" class="nav-link" active-class="nav-link-active">Métricas</RouterLink>
                     <RouterLink to="/exportar" class="nav-link" active-class="nav-link-active">Exportar</RouterLink>
                     <a href="/subir" class="nav-link">Subir</a>
