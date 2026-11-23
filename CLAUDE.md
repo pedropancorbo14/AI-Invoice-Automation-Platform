@@ -6,7 +6,9 @@ detalle técnico: `docs/arquitectura.md`.
 
 ## Comandos
 
-- `composer test`: Pest (SQLite en memoria en local; PostgreSQL en CI)
+- `composer test`: Pest (SQLite en memoria en local; PostgreSQL en CI). En el
+  contenedor `app`, con `-e DB_CONNECTION=sqlite -e DB_DATABASE=:memory:`:
+  `TestCase` se niega a usar una base que no sea `:memory:` ni acabe en `_test`
 - `composer lint`: Pint (`vendor/bin/pint` para arreglar)
 - `composer analyse`: Larastan nivel 8; no añadas baseline ni `@phpstan-ignore`
 - `composer check`: las tres; debe pasar antes de cada commit

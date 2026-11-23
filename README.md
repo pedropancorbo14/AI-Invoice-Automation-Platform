@@ -168,3 +168,11 @@ npm run build      # compila el panel
 
 Los tests usan SQLite en memoria en local. La CI (GitHub Actions) los ejecuta
 contra **PostgreSQL 17**, pasa Pint y Larastan y construye la imagen Docker.
+
+Los tests vacían la base de datos, así que se niegan a usar cualquiera que no
+sea SQLite en memoria o una cuyo nombre acabe en `_test`. Dentro del
+contenedor `app` llega la de desarrollo desde `.env`; pásales SQLite:
+
+```bash
+docker compose exec -e DB_CONNECTION=sqlite -e DB_DATABASE=:memory: app composer check
+```
