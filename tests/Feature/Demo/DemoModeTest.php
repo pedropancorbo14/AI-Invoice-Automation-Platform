@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 
 it('shows the demo credentials on the login page only in demo mode', function () {
+    $this->withoutVite();
     $this->get('/login')->assertDontSee('revisor@demo.test');
 
     config(['invoices.demo' => true]);
