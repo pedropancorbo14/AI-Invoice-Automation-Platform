@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { useSingleCompany } from '../account.js';
 import { api } from '../api.js';
 import { ago, dateTime, money } from '../format.js';
 import { usePolling } from '../polling.js';
@@ -9,6 +10,7 @@ import Icon from '../components/Icon.vue';
 import TableSkeleton from '../components/TableSkeleton.vue';
 
 const router = useRouter();
+const single = useSingleCompany();
 const documents = ref([]);
 const companies = ref([]);
 const loading = ref(true);
@@ -69,7 +71,7 @@ usePolling(load, () => 30000);
 
 onMounted(async () => {
     window.addEventListener('keydown', onKey);
-    companies.value = (await api('companies')).data;
+    if (!single) companies.value = (await api('companies')).data;
     await load();
 });
 onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
@@ -84,7 +86,7 @@ watch([companyId, reason], () => load());
             <p class="page-subtitle">Lo que el sistema no ha podido validar solo. Por orden de llegada.</p>
         </div>
         <div class="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
-            <select v-model="companyId" class="input sm:!w-52" aria-label="Cliente">
+            <select v-if="!single" v-model="companyId" class="input sm:!w-52" aria-label="Cliente">
                 <option value="">Todos los clientes</option>
                 <option v-for="c in companies" :key="c.id" :value="c.id">{{ c.name }}</option>
             </select>
@@ -112,7 +114,7 @@ watch([companyId, reason], () => load());
     </EmptyState>
 
     <EmptyState v-else-if="documents.length === 0" icon="search" title="Nada con estos filtros">
-        Prueba con otro cliente o motivo.
+        {{ single ? 'Prueba con otro motivo.' : 'Prueba con otro cliente o motivo.' }}
         <template #actions>
             <button type="button" class="btn btn-secondary" @click="companyId = ''; reason = ''">Quitar filtros</button>
         </template>
@@ -123,7 +125,7 @@ watch([companyId, reason], () => load());
             <thead class="table-head">
                 <tr>
                     <th class="px-4 py-3">Proveedor</th>
-                    <th class="hidden px-4 py-3 md:table-cell">Cliente</th>
+                    <th v-if="!single" class="hidden px-4 py-3 md:table-cell">Cliente</th>
                     <th class="px-4 py-3 text-right">Total</th>
                     <th class="hidden px-4 py-3 sm:table-cell">Motivo</th>
                     <th class="hidden px-4 py-3 text-right sm:table-cell">Recibida</th>
@@ -141,7 +143,7 @@ watch([companyId, reason], () => load());
                             <span v-for="r in doc.review_reasons" :key="r.code" class="chip">{{ r.label }}</span>
                         </div>
                     </td>
-                    <td class="hidden px-4 py-3.5 md:table-cell">
+                    <td v-if="!single" class="hidden px-4 py-3.5 md:table-cell">
                         <span v-if="doc.company">{{ doc.company.name }}</span>
                         <span v-else class="inline-flex items-center gap-1 text-brand-600 dark:text-brand-400"><Icon name="building" :size="13" /> Sin asignar</span>
                     </td>

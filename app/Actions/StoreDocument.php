@@ -20,7 +20,8 @@ use Throwable;
  *
  * Ruta: accounts/{account}/{yyyy}/{mm}/{ulid}.{ext}
  *
- * Al guardarlo encola su extracción con IA (fase 3).
+ * Al guardarlo encola su extracción con IA (fase 3). En una cuenta de empresa
+ * única, lo que llega sin cliente se asigna a esa empresa.
  */
 class StoreDocument
 {
@@ -41,6 +42,9 @@ class StoreDocument
         if ($inboundEmail !== null && $inboundEmail->account_id !== $account->getKey()) {
             throw new InvalidArgumentException('El correo no pertenece a la cuenta.');
         }
+
+        // Empresa única: lo que llega a la dirección general o se sube sin cliente es suyo.
+        $company ??= $account->soleCompany();
 
         [$disk, $path] = self::putFile($account, $contents, $originalFilename);
 

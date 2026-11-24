@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Tenant: la gestoría o empresa que contrata el servicio.
  */
-#[Fillable(['name', 'min_confidence', 'digest_frequency'])]
+#[Fillable(['name', 'min_confidence', 'digest_frequency', 'single_company'])]
 #[Hidden(['inbox_token'])]
 class Account extends Model
 {
@@ -26,7 +26,7 @@ class Account extends Model
      */
     protected function casts(): array
     {
-        return ['last_digest_sent_at' => 'datetime'];
+        return ['last_digest_sent_at' => 'datetime', 'single_company' => 'boolean'];
     }
 
     protected static function booted(): void
@@ -42,6 +42,19 @@ class Account extends Model
     public function minConfidence(): Confidence
     {
         return Confidence::tryFrom((string) $this->min_confidence) ?? Confidence::High;
+    }
+
+    /**
+     * En modo empresa única, la empresa a la que va todo lo que llega sin
+     * cliente. Null si la cuenta no está en ese modo o aún no tiene empresa.
+     */
+    public function soleCompany(): ?Company
+    {
+        if (! $this->single_company) {
+            return null;
+        }
+
+        return $this->companies()->withoutGlobalScopes()->oldest('id')->first();
     }
 
     /**

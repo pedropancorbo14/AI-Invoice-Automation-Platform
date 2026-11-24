@@ -23,6 +23,8 @@ class MeController extends Controller
                 'name' => $account->name,
                 // Lo que llega aquí cae en "sin asignar".
                 'inbox_address' => $account->inboxAddress(),
+                // Autónomo o pyme sin gestoría: el panel oculta todo lo de "clientes".
+                'single_company' => $account->single_company,
             ],
         ]]);
     }

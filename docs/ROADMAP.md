@@ -154,3 +154,6 @@ proveedor del LLM, y enseñar la demo a 10-15 gestorías para fijar el precio.
 
 Pilotos con 2-3 gestorías, cobro recurrente con Stripe, conexión directa con
 Gmail/Outlook (OAuth), segunda integración contable y alta en autoservicio.
+
+- [x] Modo empresa única para autónomos y pymes sin gestoría (piloto: todo se
+      asigna a su empresa y el panel no habla de "clientes")
