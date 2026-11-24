@@ -53,6 +53,13 @@ subdirección sobre un único buzón:
 | `facturas+<token de la cuenta>@dominio` | la cuenta, bandeja "sin asignar" |
 | sin token o token desconocido | nadie (`unrouted`, solo lo ve quien opera la plataforma) |
 
+**Empresa única.** Una cuenta con `single_company` (un autónomo o una pyme sin
+gestoría) tiene una sola empresa: lo que llega sin cliente, por la dirección de
+la cuenta o por subida manual, se le asigna en `StoreDocument`, no se pueden
+crear más empresas y el panel oculta los selectores y columnas de "cliente".
+Se activa con `PATCH /api/account/settings` (`single_company: true`) mientras la
+cuenta tenga como mucho una empresa.
+
 El comando `inbox:fetch` lee el buzón por IMAP cada 2 minutos (scheduler),
 guarda el `.eml` original y encola un job por correo (`ProcessInboundEmail`):
 

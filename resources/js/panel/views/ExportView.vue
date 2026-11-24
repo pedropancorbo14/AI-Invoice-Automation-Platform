@@ -1,5 +1,6 @@
 <script setup>
 import { computed, inject, onMounted, ref } from 'vue';
+import { useSingleCompany } from '../account.js';
 import { api, download } from '../api.js';
 import { confirm } from '../confirm.js';
 import { track } from '../toast.js';
@@ -8,6 +9,7 @@ import Icon from '../components/Icon.vue';
 const boot = inject('boot');
 const isAdmin = computed(() => boot.user.role === 'admin');
 
+const single = useSingleCompany();
 const companies = ref([]);
 const error = ref(null);
 // Qué se está haciendo ahora: "download:3", "email:3", "holded:3"... (un botón con su indicador de carga).
@@ -84,7 +86,9 @@ function connect(company) {
 async function disconnect(company) {
     const ok = await confirm({
         title: `¿Desconectar ${company.name} de Holded?`,
-        message: 'Las facturas de este cliente dejarán de exportarse solas. Podrás volver a conectarla con su API key.',
+        message: single
+            ? 'Tus facturas dejarán de exportarse solas. Podrás volver a conectarla con tu API key.'
+            : 'Las facturas de este cliente dejarán de exportarse solas. Podrás volver a conectarla con su API key.',
         confirm: 'Desconectar',
         danger: true,
     });
@@ -107,7 +111,9 @@ onMounted(() => load().catch((e) => (error.value = e.message)));
     <div class="mb-6">
         <h1 class="page-title">Exportar</h1>
         <p class="page-subtitle">
-            Las facturas validadas van solas a Holded si el cliente está conectado. Aquí también puedes sacar el libro de facturas en Excel o CSV.
+            {{ single
+                ? 'Las facturas validadas van solas a Holded si lo tienes conectado. Aquí también puedes sacar el libro de facturas en Excel o CSV para tu asesor o para hacer los impuestos.'
+                : 'Las facturas validadas van solas a Holded si el cliente está conectado. Aquí también puedes sacar el libro de facturas en Excel o CSV.' }}
         </p>
     </div>
 
@@ -187,6 +193,6 @@ onMounted(() => load().catch((e) => (error.value = e.message)));
                 </button>
             </div>
         </div>
-        <p v-if="!companies.length" class="p-8 text-center text-sm text-slate-500">Todavía no hay clientes.</p>
+        <p v-if="!companies.length" class="p-8 text-center text-sm text-slate-500">{{ single ? 'Tu empresa todavía no está dada de alta.' : 'Todavía no hay clientes.' }}</p>
     </div>
 </template>

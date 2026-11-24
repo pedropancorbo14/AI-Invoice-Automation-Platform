@@ -1,6 +1,7 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useSingleCompany } from '../account.js';
 import { api } from '../api.js';
 import { ago, date, dateTime, money } from '../format.js';
 import { refreshCounts, usePolling } from '../polling.js';
@@ -13,6 +14,7 @@ import TableSkeleton from '../components/TableSkeleton.vue';
 
 const route = useRoute();
 const router = useRouter();
+const single = useSingleCompany();
 const documents = ref([]);
 const companies = ref([]);
 const counts = ref({});
@@ -124,7 +126,7 @@ async function reprocess(doc) {
 usePolling(load, () => (processing.value ? 4000 : 30000));
 
 onMounted(async () => {
-    companies.value = (await api('companies')).data;
+    if (!single) companies.value = (await api('companies')).data;
     await load();
     if (route.query.foco === 'buscar') searchInput.value?.focus();
 });
@@ -162,7 +164,7 @@ watch(() => route.query, async (query) => {
                 />
                 <kbd v-if="!search" class="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2">/</kbd>
             </div>
-            <select :value="companyId" class="input sm:!w-52" aria-label="Cliente" @change="filter({ cliente: $event.target.value })">
+            <select v-if="!single" :value="companyId" class="input sm:!w-52" aria-label="Cliente" @change="filter({ cliente: $event.target.value })">
                 <option value="">Todos los clientes</option>
                 <option value="sin">Sin asignar</option>
                 <option v-for="c in companies" :key="c.id" :value="String(c.id)">{{ c.name }}</option>
@@ -201,7 +203,9 @@ watch(() => route.query, async (query) => {
     </EmptyState>
 
     <EmptyState v-else-if="documents.length === 0" icon="files" title="Todavía no hay facturas">
-        Llegan solas cuando se reenvían por email a la dirección de cada cliente. También puedes subirlas a mano.
+        {{ single
+            ? 'Llegan solas cuando las reenvías por email a tu dirección de facturas. También puedes subirlas a mano.'
+            : 'Llegan solas cuando se reenvían por email a la dirección de cada cliente. También puedes subirlas a mano.' }}
         <template #actions>
             <RouterLink to="/subir" class="btn btn-primary"><Icon name="upload" /> Subir facturas</RouterLink>
         </template>
@@ -213,7 +217,7 @@ watch(() => route.query, async (query) => {
                 <thead class="table-head">
                     <tr>
                         <th class="px-4 py-3">Proveedor</th>
-                        <th class="hidden px-4 py-3 md:table-cell">Cliente</th>
+                        <th v-if="!single" class="hidden px-4 py-3 md:table-cell">Cliente</th>
                         <th class="hidden px-4 py-3 lg:table-cell">Fecha</th>
                         <th class="px-4 py-3 text-right">Total</th>
                         <th class="hidden px-4 py-3 sm:table-cell">Estado</th>
@@ -230,7 +234,7 @@ watch(() => route.query, async (query) => {
                             </div>
                             <div class="mt-2 sm:hidden"><StatusBadge :status="doc.status" :label="doc.status_label" /></div>
                         </td>
-                        <td class="hidden px-4 py-3.5 md:table-cell">
+                        <td v-if="!single" class="hidden px-4 py-3.5 md:table-cell">
                             <span v-if="doc.company">{{ doc.company.name }}</span>
                             <span v-else class="inline-flex items-center gap-1 text-brand-600 dark:text-brand-400"><Icon name="building" :size="13" /> Sin asignar</span>
                         </td>

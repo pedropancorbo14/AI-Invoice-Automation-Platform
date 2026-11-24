@@ -1,6 +1,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { useSingleCompany } from '../account.js';
 import { api, ApiError, download } from '../api.js';
 import { checkTotal, expectedTax, formatCents, toPayload } from '../invoice.js';
 import { dateTime } from '../format.js';
@@ -13,6 +14,7 @@ import StatusBadge from '../components/StatusBadge.vue';
 
 const props = defineProps({ id: { type: Number, required: true } });
 const router = useRouter();
+const single = useSingleCompany();
 
 const doc = ref(null);
 const form = ref(null);
@@ -94,7 +96,8 @@ async function load() {
     doc.value = response.data;
     companies.value = companiesResponse.data;
     queue.value = queueResponse.data.map((d) => d.id);
-    companyId.value = doc.value.company?.id ?? '';
+    // Empresa única: si quedó algo sin asignar (de antes del modo), es de su empresa.
+    companyId.value = doc.value.company?.id ?? (single ? companies.value[0]?.id ?? '' : '');
 
     // Copia profunda (structuredClone no admite los proxies reactivos de Vue).
     const data = doc.value.extraction?.data ? JSON.parse(JSON.stringify(doc.value.extraction.data)) : emptyData();
@@ -290,7 +293,7 @@ watch(() => props.id, () => load().catch((e) => (error.value = e.message)));
                 <div class="mb-2 flex flex-wrap items-center gap-2">
                     <StatusBadge :status="doc.status" :label="doc.status_label" />
                     <span class="text-xs text-slate-500 tabular-nums">#{{ doc.id }}</span>
-                    <span v-if="doc.company" class="ml-auto inline-flex items-center gap-1 text-xs text-slate-500"><Icon name="building" :size="13" /> {{ doc.company.name }}</span>
+                    <span v-if="doc.company && !single" class="ml-auto inline-flex items-center gap-1 text-xs text-slate-500"><Icon name="building" :size="13" /> {{ doc.company.name }}</span>
                 </div>
                 <div v-if="doc.review_reasons.length" class="mb-2 flex flex-wrap gap-1">
                     <span v-for="r in doc.review_reasons" :key="r.code" class="chip">{{ r.label }}</span>
@@ -309,7 +312,7 @@ watch(() => props.id, () => load().catch((e) => (error.value = e.message)));
                 <Icon name="alert" :size="13" /> Solo lectura: esta factura ya no está pendiente de revisar.
             </p>
             <form v-if="form && !needsFile" class="card space-y-4 p-4" :class="{ 'opacity-75': !pending }" :inert="!pending || undefined" @submit.prevent="approve(false)">
-                <div v-if="!doc.company" class="rounded-xl bg-brand-50 p-3 dark:bg-brand-950/40">
+                <div v-if="!doc.company && !(single && companyId)" class="rounded-xl bg-brand-50 p-3 dark:bg-brand-950/40">
                     <label class="label" for="company">Cliente (sin asignar)</label>
                     <select id="company" v-model="companyId" class="input">
                         <option value="">Elige el cliente…</option>

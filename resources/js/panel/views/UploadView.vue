@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { useSingleCompany } from '../account.js';
 import { api } from '../api.js';
 import { refreshCounts, usePolling } from '../polling.js';
 import { isInProgress } from '../status.js';
@@ -10,6 +11,7 @@ import StatusBadge from '../components/StatusBadge.vue';
 const BATCH = 20; // Máximo de ficheros por petición en la API.
 const ACCEPT = '.pdf,.jpg,.jpeg,.png,.heic,application/pdf,image/jpeg,image/png,image/heic';
 
+const single = useSingleCompany();
 const me = ref(null);
 const companies = ref([]);
 const companyId = ref('');
@@ -124,7 +126,7 @@ onBeforeUnmount(() => window.removeEventListener('paste', onPaste));
         </div>
 
         <div class="card p-5">
-            <div class="mb-4 max-w-sm">
+            <div v-if="!single" class="mb-4 max-w-sm">
                 <label class="label" for="company">Cliente</label>
                 <select id="company" v-model="companyId" class="input">
                     <option value="">Sin asignar (lo decides después)</option>
@@ -191,8 +193,12 @@ onBeforeUnmount(() => window.removeEventListener('paste', onPaste));
         </div>
 
         <div class="mt-8 mb-3">
-            <h2 class="text-lg font-semibold tracking-tight">Direcciones de reenvío</h2>
-            <p class="page-subtitle">Cada cliente reenvía sus facturas a su dirección y entran solas, ya asignadas.</p>
+            <h2 class="text-lg font-semibold tracking-tight">{{ single ? 'Tu dirección de facturas' : 'Direcciones de reenvío' }}</h2>
+            <p class="page-subtitle">
+                {{ single
+                    ? 'Reenvía aquí las facturas que te lleguen por email (o pon una regla en Gmail u Outlook) y entran solas.'
+                    : 'Cada cliente reenvía sus facturas a su dirección y entran solas, ya asignadas.' }}
+            </p>
         </div>
         <div class="card divide-y divide-slate-100 dark:divide-slate-800">
             <div v-for="c in companies" :key="c.id" class="flex flex-wrap items-center gap-3 px-5 py-3.5">
@@ -203,7 +209,7 @@ onBeforeUnmount(() => window.removeEventListener('paste', onPaste));
                 <code class="rounded-lg bg-slate-100 px-2.5 py-1 font-mono text-xs break-all dark:bg-slate-800">{{ c.inbox_address }}</code>
                 <button type="button" class="btn btn-ghost btn-sm" title="Copiar" @click="copy(c.inbox_address)"><Icon name="copy" :size="14" /></button>
             </div>
-            <div v-if="me" class="flex flex-wrap items-center gap-3 px-5 py-3.5">
+            <div v-if="me && !single" class="flex flex-wrap items-center gap-3 px-5 py-3.5">
                 <div class="min-w-40 flex-1">
                     <p class="font-medium">Sin cliente concreto</p>
                     <p class="text-xs text-slate-500">Van a "Sin asignar" y eliges el cliente al revisar</p>

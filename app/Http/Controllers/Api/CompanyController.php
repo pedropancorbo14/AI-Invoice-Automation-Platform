@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CompanyResource;
+use App\Models\Account;
 use App\Models\Company;
 use App\Support\Tenancy\CurrentAccount;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class CompanyController extends Controller
 {
@@ -33,6 +35,14 @@ class CompanyController extends Controller
                 Rule::unique('companies')->where('account_id', $currentAccount->id()),
             ],
         ]);
+
+        $singleCompany = (bool) Account::query()->whereKey($currentAccount->id())->value('single_company');
+
+        if ($singleCompany && Company::query()->exists()) {
+            throw ValidationException::withMessages([
+                'name' => 'La cuenta es de empresa única y ya tiene su empresa.',
+            ]);
+        }
 
         return new CompanyResource(Company::create($data));
     }

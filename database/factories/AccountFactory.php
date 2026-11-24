@@ -16,4 +16,12 @@ class AccountFactory extends Factory
             'name' => 'Gestoría '.fake()->unique()->lastName(),
         ];
     }
+
+    /**
+     * Autónomo o pyme sin gestoría: una sola empresa.
+     */
+    public function singleCompany(): static
+    {
+        return $this->state(['name' => fake()->company(), 'single_company' => true]);
+    }
 }

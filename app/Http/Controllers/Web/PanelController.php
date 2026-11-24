@@ -18,7 +18,7 @@ class PanelController extends Controller
 
         return view('panel', ['boot' => [
             'user' => ['name' => $user->name, 'role' => $user->role->value],
-            'account' => ['name' => $account->name],
+            'account' => ['name' => $account->name, 'single_company' => $account->single_company],
             'demo' => (bool) config('invoices.demo'),
         ]]);
     }
