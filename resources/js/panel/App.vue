@@ -23,6 +23,7 @@ const NAV = [
     { to: '/facturas', label: 'Facturas', icon: 'files' },
     { to: '/subir', label: 'Subir', icon: 'upload' },
     { to: '/metricas', label: 'Métricas', icon: 'chart' },
+    { to: '/impuestos', label: 'Impuestos', icon: 'percent' },
     { to: '/exportar', label: 'Exportar', icon: 'download' },
 ];
 
@@ -69,7 +70,7 @@ function onKey(event) {
     } else if (event.key === 'g') {
         pendingG = Date.now();
     } else if (Date.now() - pendingG < 1000) {
-        const to = { p: '/revisar', f: '/facturas', s: '/subir', m: '/metricas', e: '/exportar' }[event.key];
+        const to = { p: '/revisar', f: '/facturas', s: '/subir', m: '/metricas', i: '/impuestos', e: '/exportar' }[event.key];
         pendingG = 0;
         if (to) {
             event.preventDefault();

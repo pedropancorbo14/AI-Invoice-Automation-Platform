@@ -18,6 +18,16 @@ class Money
     }
 
     /**
+     * Céntimos a texto con 2 decimales, como se guardan: -1234 → "-12.34".
+     */
+    public static function decimal(int $cents): string
+    {
+        $abs = abs($cents);
+
+        return ($cents < 0 ? '-' : '').intdiv($abs, 100).'.'.str_pad((string) ($abs % 100), 2, '0', STR_PAD_LEFT);
+    }
+
+    /**
      * Formato español para los motivos: 1234.5 € → "1.234,50".
      */
     public static function format(int $cents): string

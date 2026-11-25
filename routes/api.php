@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\AccountSettingsController;
 use App\Http\Controllers\Api\AuthTokenController;
 use App\Http\Controllers\Api\CompanyController;
 use App\Http\Controllers\Api\CompanyExportController;
+use App\Http\Controllers\Api\CompanyVatSummaryController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\DocumentReviewController;
 use App\Http\Controllers\Api\DocumentUploadController;
@@ -30,6 +31,7 @@ Route::middleware(['auth:sanctum', 'tenant'])->group(function () {
     Route::get('companies/{company}', [CompanyController::class, 'show'])->name('companies.show');
     Route::get('companies/{company}/export', [CompanyExportController::class, 'download'])->name('companies.export');
     Route::post('companies/{company}/export/email', [CompanyExportController::class, 'email'])->name('companies.export.email');
+    Route::get('companies/{company}/vat-summary', CompanyVatSummaryController::class)->name('companies.vat-summary');
     Route::put('companies/{company}/holded', [HoldedConnectionController::class, 'update'])->name('companies.holded.update');
     Route::delete('companies/{company}/holded', [HoldedConnectionController::class, 'destroy'])->name('companies.holded.destroy');
 

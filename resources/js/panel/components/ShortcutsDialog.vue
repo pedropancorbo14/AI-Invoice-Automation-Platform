@@ -11,6 +11,7 @@ const GROUPS = [
             [['g', 'p'], 'Ir a Pendientes'],
             [['g', 'f'], 'Ir a Facturas'],
             [['g', 's'], 'Ir a Subir'],
+            [['g', 'i'], 'Ir a Impuestos'],
             [['/'], 'Buscar facturas'],
         ],
     },
