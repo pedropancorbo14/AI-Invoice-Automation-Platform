@@ -157,3 +157,6 @@ Gmail/Outlook (OAuth), segunda integración contable y alta en autoservicio.
 
 - [x] Modo empresa única para autónomos y pymes sin gestoría (piloto: todo se
       asigna a su empresa y el panel no habla de "clientes")
+- [x] Resumen trimestral de IVA y retenciones (base para los modelos 303, 111
+      y 130) por cliente, con aviso de lo que falta por validar; también como
+      hoja «Resumen IVA» en el Excel del libro
