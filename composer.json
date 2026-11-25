@@ -25,6 +25,7 @@
         "zbateson/mail-mime-parser": "^4.0"
     },
     "require-dev": {
+        "chillerlan/php-qrcode": "^5.0",
         "larastan/larastan": "^3.7",
         "laravel/pail": "^1.2.5",
         "laravel/pao": "^1.0.6",

@@ -20,6 +20,7 @@ class ReviewCode
         'confidence' => 'Datos dudosos',
         'duplicate' => 'Posible duplicado',
         'new_supplier' => 'Proveedor nuevo',
+        'verifactu' => 'No coincide con el QR',
         // Entrada y extracción
         'link_invoice' => 'Factura por enlace',
         'unreadable' => 'No se puede leer',

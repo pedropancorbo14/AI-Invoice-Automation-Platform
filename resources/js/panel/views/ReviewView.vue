@@ -3,7 +3,8 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router';
 import { api, ApiError, download } from '../api.js';
 import { checkTotal, expectedTax, formatCents, toPayload } from '../invoice.js';
-import { dateTime } from '../format.js';
+import { date, dateTime, money } from '../format.js';
+import { applyQr, qrDifferences } from '../verifactu.js';
 import { refreshCounts } from '../polling.js';
 import { canReprocess, describeEvent } from '../status.js';
 import { errorMessage, toast, track } from '../toast.js';
@@ -46,6 +47,15 @@ const reviewEvent = computed(() => [...(doc.value?.events ?? [])].reverse().find
 const failures = computed(() => reviewEvent.value?.payload?.failures ?? []);
 const links = computed(() => reviewEvent.value?.payload?.links ?? []);
 const notes = computed(() => doc.value?.extraction?.notes ?? []);
+
+// QR de VERI*FACTU: lo pone el programa del emisor, así que manda sobre lo que leyó la IA.
+const qr = computed(() => doc.value?.extraction?.verifactu ?? null);
+const qrDiffs = computed(() => qrDifferences(form.value, qr.value));
+const qrValue = (field, value) => (field === 'total' ? money(value) : field === 'issue_date' ? date(value) : value || '—');
+function useQr() {
+    applyQr(form.value, qr.value);
+    toast('Copiados el CIF, el número, la fecha y el total del QR. Revisa el desglose de IVA.');
+}
 
 // Campos a resaltar: los que la IA no tiene claros y los que fallan en alguna regla.
 const doubtful = computed(() => new Set([
@@ -296,6 +306,19 @@ watch(() => props.id, () => load().catch((e) => (error.value = e.message)));
                     <span v-for="r in doc.review_reasons" :key="r.code" class="chip">{{ r.label }}</span>
                 </div>
                 <p v-if="doc.status_reason" class="text-sm text-slate-700 dark:text-slate-300">{{ doc.status_reason }}</p>
+                <div v-if="qr && form" class="mt-3 rounded-xl p-3 text-sm" :class="qrDiffs.length ? 'bg-amber-50 dark:bg-amber-950/40' : 'bg-emerald-50 dark:bg-emerald-950/40'">
+                    <p class="flex items-center gap-1.5 font-medium" :class="qrDiffs.length ? 'text-amber-900 dark:text-amber-100' : 'text-emerald-800 dark:text-emerald-200'">
+                        <Icon :name="qrDiffs.length ? 'alert' : 'check-circle'" :size="15" />
+                        {{ qrDiffs.length ? 'El QR de VERI*FACTU no coincide con los datos' : 'Coincide con el QR de VERI*FACTU' }}
+                    </p>
+                    <ul v-if="qrDiffs.length" class="mt-2 space-y-0.5 text-amber-900 dark:text-amber-100">
+                        <li v-for="d in qrDiffs" :key="d.field">
+                            {{ d.label }}: <span class="line-through opacity-70">{{ qrValue(d.field, d.form) }}</span> → <strong>{{ qrValue(d.field, d.qr) }}</strong>
+                        </li>
+                    </ul>
+                    <p v-else class="mt-1 text-xs text-emerald-800/80 dark:text-emerald-200/80">CIF, número, fecha y total confirmados por el programa de facturación del emisor.</p>
+                    <button v-if="qrDiffs.length && pending" type="button" class="btn btn-secondary btn-sm mt-2" @click="useQr">Usar los datos del QR</button>
+                </div>
                 <div v-if="canReprocess(doc)" class="mt-3 flex flex-wrap items-center gap-3 rounded-xl bg-slate-50 p-3 text-sm dark:bg-slate-800/50">
                     <p class="flex-1 text-slate-600 dark:text-slate-300">¿La IA se equivocó o hubo un error? Puedes pedirle que la lea otra vez.</p>
                     <button type="button" class="btn btn-secondary btn-sm" :disabled="busy" :aria-busy="busyAction === 'reprocess'" @click="reprocess">

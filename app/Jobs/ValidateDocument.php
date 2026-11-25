@@ -14,6 +14,7 @@ use App\Support\Validation\SupplierMemory;
 use App\Support\Validation\ValidationInput;
 use App\Support\Validation\ValidationReport;
 use App\Support\Validation\Validator;
+use App\Support\Verifactu\VerifactuQr;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -70,6 +71,7 @@ class ValidateDocument implements ShouldQueue
             accountId: $document->account_id,
             companyId: $document->company_id,
             documentId: $document->id,
+            verifactu: VerifactuQr::fromArray($extraction->verifactu),
         );
     }
 

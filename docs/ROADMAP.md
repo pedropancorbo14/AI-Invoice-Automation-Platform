@@ -90,6 +90,8 @@ Formato e instrucciones: [evaluacion.md](evaluacion.md). Va en `storage/app/eval
 - [x] Cada regla que falla guarda un motivo legible
 - [x] Tests unitarios por regla con casos límite
 - [x] Extra: `invoices:eval` mide qué harían las reglas (% automático, falsos aprobados, revisiones de más)
+- [x] Extra: QR de VERI*FACTU. Se lee sin IA y se contrasta con lo extraído; lo que coincide no se duda
+- [ ] Probar el QR con facturas VERI*FACTU reales (escaneadas y fotografiadas) y añadir TicketBAI
 
 **Criterio de salida:** con el dataset de la fase 3, todas las facturas con errores van a revisión
 (0 falsos aprobados) y al menos el 70 % salen sin intervención. ⏳ Pendiente del dataset.

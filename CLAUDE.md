@@ -81,3 +81,5 @@ detalle técnico: `docs/arquitectura.md`.
 - Los tests nunca llaman a la API: `TestCase` registra `FakeLLMProvider`, y
   `FakeAnthropicApi` simula la API a nivel HTTP para probar `ClaudeProvider`.
   La extracción está desactivada por defecto en tests (`EXTRACTION_ENABLED`).
+- El QR de VERI*FACTU se lee con `QrCodeReader`; en los tests, `FakeQrCodeReader`
+  (`$this->qr->returns([...])`). La regla decide con el QR; nunca la IA.

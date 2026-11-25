@@ -4,6 +4,7 @@ namespace App\Support\Validation;
 
 use App\Support\Extraction\Confidence;
 use App\Support\Extraction\DocumentType;
+use App\Support\Verifactu\VerifactuQr;
 use Carbon\CarbonImmutable;
 
 /**
@@ -29,7 +30,19 @@ final readonly class ValidationInput
         public ?int $accountId = null,
         public ?int $companyId = null,
         public ?int $documentId = null,
+        /** El QR de VERI*FACTU de la factura, si lo lleva. */
+        public ?VerifactuQr $verifactu = null,
     ) {}
+
+    /**
+     * Campos que confirma el QR de VERI*FACTU (vacío sin QR).
+     *
+     * @return list<string>
+     */
+    public function confirmedByQr(): array
+    {
+        return $this->verifactu?->confirmedFields($this->data) ?? [];
+    }
 
     public function supplierTaxId(): ?string
     {

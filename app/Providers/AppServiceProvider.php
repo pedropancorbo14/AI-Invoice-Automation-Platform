@@ -8,6 +8,8 @@ use App\Support\Extraction\LLMProvider;
 use App\Support\Inbox\ImapMailbox;
 use App\Support\Inbox\Mailbox;
 use App\Support\Tenancy\CurrentAccount;
+use App\Support\Verifactu\QrCodeReader;
+use App\Support\Verifactu\ZbarQrCodeReader;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
 
@@ -29,6 +31,8 @@ class AppServiceProvider extends ServiceProvider
             new Client(requestOptions: ['maxRetries' => 2]),
             (array) config('invoices.extraction'),
         ));
+
+        $this->app->bind(QrCodeReader::class, ZbarQrCodeReader::class);
     }
 
     /**

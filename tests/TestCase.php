@@ -3,14 +3,18 @@
 namespace Tests;
 
 use App\Support\Extraction\LLMProvider;
+use App\Support\Verifactu\QrCodeReader;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use RuntimeException;
 use Tests\Support\FakeLLMProvider;
+use Tests\Support\FakeQrCodeReader;
 
 abstract class TestCase extends BaseTestCase
 {
     protected FakeLLMProvider $llm;
+
+    protected FakeQrCodeReader $qr;
 
     public function createApplication(): Application
     {
@@ -29,6 +33,10 @@ abstract class TestCase extends BaseTestCase
         // Ningún test llama a la API de verdad.
         $this->llm = new FakeLLMProvider;
         $this->app->instance(LLMProvider::class, $this->llm);
+
+        // Ni zbarimg ni pdftoppm: los QR se preparan en cada test.
+        $this->qr = new FakeQrCodeReader;
+        $this->app->instance(QrCodeReader::class, $this->qr);
     }
 
     /**

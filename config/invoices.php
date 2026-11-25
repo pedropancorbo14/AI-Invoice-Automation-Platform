@@ -115,6 +115,19 @@ return [
     ],
 
     /*
+    | QR de VERI*FACTU: el programa de facturación del emisor pone en el QR
+    | su NIF, el número, la fecha y el total. Si la factura lo lleva, se
+    | contrasta con lo que lee la IA. Necesita zbarimg (zbar-tools) y, para
+    | los PDF escaneados, pdftoppm (poppler-utils).
+    */
+    'verifactu' => [
+        'enabled' => (bool) env('VERIFACTU_QR_ENABLED', true),
+        // El QR va al principio de la factura: basta con mirar las primeras páginas.
+        'pdf_pages' => (int) env('VERIFACTU_QR_PDF_PAGES', 2),
+        'pdf_dpi' => (int) env('VERIFACTU_QR_PDF_DPI', 200),
+    ],
+
+    /*
     | Exportación (fase 6). Al validarse, cada factura se manda a los destinos
     | que tenga configurados su empresa.
     */

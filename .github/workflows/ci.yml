@@ -77,6 +77,10 @@ jobs:
 
       - run: composer install --prefer-dist --no-interaction --no-progress
 
+      # Para los tests del lector de QR de VERI*FACTU.
+      - name: zbarimg y pdftoppm
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends zbar-tools poppler-utils
+
       - name: Preparar entorno
         run: |
           cp .env.example .env
@@ -130,3 +134,5 @@ jobs:
         run: docker run --rm invoices-app:ci php -m | grep -E 'pdo_pgsql|redis|intl|pcntl'
       - name: Conversor HEIC disponible
         run: docker run --rm invoices-app:ci sh -c 'command -v heif-convert'
+      - name: Lector de QR disponible
+        run: docker run --rm invoices-app:ci sh -c 'command -v zbarimg && command -v pdftoppm'

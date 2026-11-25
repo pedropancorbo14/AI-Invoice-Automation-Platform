@@ -23,6 +23,8 @@ class DocumentExtractionResource extends JsonResource
             'confidence' => $this->confidence,
             'doubtful_fields' => $this->doubtfulFields(),
             'notes' => $this->notes,
+            // Lo que dice el QR de VERI*FACTU, si la factura lo lleva.
+            'verifactu' => $this->verifactu,
             'model' => $this->model,
             'input_mode' => $this->input_mode->value,
             'duration_ms' => $this->duration_ms,
