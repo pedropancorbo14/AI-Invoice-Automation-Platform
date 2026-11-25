@@ -10,8 +10,10 @@ COPY --from=mlocati/php-extension-installer:2.7 /usr/bin/install-php-extensions 
 COPY --from=composer:2.8 /usr/bin/composer /usr/local/bin/composer
 
 # libheif-examples trae heif-convert, para pasar las fotos HEIC del iPhone a JPG.
+# zbar-tools (zbarimg) lee el QR de VERI*FACTU; poppler-utils (pdftoppm) pasa
+# los PDF escaneados a imagen para buscarlo.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git unzip libheif-examples \
+    && apt-get install -y --no-install-recommends git unzip libheif-examples zbar-tools poppler-utils \
     && rm -rf /var/lib/apt/lists/* \
     && install-php-extensions pdo_pgsql redis pcntl intl zip gd bcmath exif opcache
 

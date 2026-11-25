@@ -35,6 +35,7 @@ class Validation
             accountId: $context['accountId'] ?? null,
             companyId: $context['companyId'] ?? null,
             documentId: $context['documentId'] ?? null,
+            verifactu: $context['verifactu'] ?? null,
         );
     }
 

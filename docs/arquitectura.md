@@ -129,9 +129,23 @@ un **motivo legible**, y la lista completa queda en la auditoría.
 | Fechas: ni futuras, ni de hace más de un año (configurable), vencimiento ≥ emisión | La fecha de emisión es futura: 25/11/2026. |
 | Campos obligatorios y divisa | Falta el número de factura. / Factura en USD: revisa el cambio a euros. |
 | Recibida o emitida, según el CIF de la empresa | La factura no parece de Panadería La Espiga S.L.: … |
-| Confianza de la IA (umbral por cuenta: alta o media) | Dato dudoso en total: el total está tachado. |
+| QR de VERI*FACTU: NIF del emisor, número, fecha y total iguales a los del QR | El total no coincide con el QR de VERI*FACTU: la IA leyó 112,00 € y el QR dice 121,00 €. |
+| Confianza de la IA (umbral por cuenta: alta o media); lo que confirma el QR no se duda | Dato dudoso en total: el total está tachado. |
 | Duplicado de negocio: mismo CIF + número + total | Posible duplicado del documento #12 (mismo proveedor, número y total). |
 | Proveedor nuevo: la primera factura de cada uno se revisa | Proveedor nuevo: Fontanería García S.L. (B12345674). … |
+
+**QR de VERI*FACTU.** Las facturas de sistemas VERI*FACTU llevan un QR con
+la URL de cotejo de la AEAT (`.../wlpl/TIKE-CONT/ValidarQR?nif=…&numserie=…&fecha=DD-MM-AAAA&importe=…`).
+Lo pone el programa de facturación del emisor, así que es una fuente fiable
+sin IA. `ExtractDocument` lo lee con `QrCodeReader` (`ZbarQrCodeReader`:
+primero busca la URL dentro del PDF y, si no está, pasa las primeras páginas a
+imagen con `pdftoppm` y las lee con `zbarimg`) y lo guarda en
+`document_extractions.verifactu`. `VerifactuRule` manda a revisión lo que no
+coincide (y los QR del entorno de pruebas de la AEAT), y `ConfidenceRule` deja
+de dudar de los campos que el QR confirma. En la revisión, el panel enseña las
+diferencias y copia los datos del QR con un botón. Leer el QR nunca para la
+extracción: si falla, se sigue sin él. Se desactiva con `VERIFACTU_QR_ENABLED=false`.
+TicketBAI (País Vasco) todavía no se lee.
 
 **Memoria por proveedor** (`suppliers`, una por empresa cliente): nombre,
 IVA habitual, cuenta contable y categoría. Se rellena con cada factura validada

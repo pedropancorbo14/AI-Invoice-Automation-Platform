@@ -14,6 +14,8 @@ use App\Support\Extraction\ExtractionResult;
 use App\Support\Extraction\InputPreparer;
 use App\Support\Extraction\LLMProvider;
 use App\Support\Tenancy\CurrentAccount;
+use App\Support\Verifactu\QrCodeReader;
+use App\Support\Verifactu\VerifactuQr;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +31,9 @@ use Throwable;
  *                         → NEEDS_REVIEW    (albarán o presupuesto)
  *   RECEIVED → NEEDS_REVIEW                 (la IA lo rechaza o no se puede leer)
  *   RECEIVED → FAILED                       (error técnico, tras los reintentos)
+ *
+ * Si la factura lleva el QR de VERI*FACTU, se lee aquí (sin IA) y se guarda
+ * con la extracción para que la validación lo contraste.
  *
  * Después de EXTRACTED encola la validación (ValidateDocument).
  *
@@ -48,7 +53,7 @@ class ExtractDocument implements ShouldQueue
 
     public function __construct(public readonly int $documentId) {}
 
-    public function handle(LLMProvider $provider, InputPreparer $preparer, CurrentAccount $currentAccount): void
+    public function handle(LLMProvider $provider, InputPreparer $preparer, QrCodeReader $qrReader, CurrentAccount $currentAccount): void
     {
         $document = Document::withoutGlobalScopes()->with('company')->find($this->documentId);
 
@@ -56,10 +61,12 @@ class ExtractDocument implements ShouldQueue
             return;
         }
 
-        $currentAccount->run($document->account_id, function () use ($document, $provider, $preparer): void {
+        $currentAccount->run($document->account_id, function () use ($document, $provider, $preparer, $qrReader): void {
+            $contents = (string) Storage::disk($document->disk)->get($document->path);
+
             try {
                 $input = $preparer->prepare(
-                    (string) Storage::disk($document->disk)->get($document->path),
+                    $contents,
                     $document->mime_type,
                     $document->company?->name,
                     $document->company?->tax_id,
@@ -79,11 +86,15 @@ class ExtractDocument implements ShouldQueue
                 return;
             }
 
-            DB::transaction(fn () => $this->apply($document, $input, $result));
+            $qr = config('invoices.verifactu.enabled')
+                ? VerifactuQr::first($qrReader->read($contents, $document->mime_type))
+                : null;
+
+            DB::transaction(fn () => $this->apply($document, $input, $result, $qr));
         });
     }
 
-    private function apply(Document $document, ExtractionInput $input, ExtractionResult $result): void
+    private function apply(Document $document, ExtractionInput $input, ExtractionResult $result, ?VerifactuQr $qr): void
     {
         $extraction = $document->extractions()->create([
             'account_id' => $document->account_id,
@@ -93,6 +104,7 @@ class ExtractDocument implements ShouldQueue
             'data' => $result->data,
             'confidence' => array_map(fn ($level) => $level->value, $result->confidence),
             'notes' => $result->notes,
+            'verifactu' => $qr?->toArray(),
             'input_tokens' => $result->inputTokens,
             'output_tokens' => $result->outputTokens,
             'cache_write_tokens' => $result->cacheWriteTokens,

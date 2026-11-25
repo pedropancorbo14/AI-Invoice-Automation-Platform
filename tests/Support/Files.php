@@ -3,6 +3,9 @@
 namespace Tests\Support;
 
 use App\Support\Demo\SamplePdf;
+use chillerlan\QRCode\Output\QROutputInterface;
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
 
 /**
  * Ficheros de prueba con contenido real (magic bytes correctos).
@@ -81,6 +84,32 @@ class Files
             'IVA 21%: 21,00 EUR',
             'TOTAL FACTURA: 121,00 EUR',
         ]);
+    }
+
+    /**
+     * Imagen con un QR de verdad que contiene $text, como la de una factura
+     * escaneada o fotografiada.
+     */
+    public static function qrImage(string $text, string $format = 'png'): string
+    {
+        return (new QRCode(new QROptions([
+            'outputType' => $format === 'png' ? QROutputInterface::GDIMAGE_PNG : QROutputInterface::GDIMAGE_JPG,
+            'outputBase64' => false,
+            'scale' => 6,
+        ])))->render($text);
+    }
+
+    /**
+     * Factura en PDF con el QR solo como imagen (la URL no aparece en el
+     * fichero): para leerla hay que pasar la página a imagen.
+     */
+    public static function invoicePdfWithQr(string $url): string
+    {
+        return SamplePdf::render([
+            'FONTANERIA GARCIA S.L.  CIF B12345674',
+            'FACTURA N.: F-2026-001   Fecha: 15/11/2026',
+            'TOTAL FACTURA: 121,00 EUR',
+        ], self::qrImage($url, 'jpg'));
     }
 
     public static function heic(): string

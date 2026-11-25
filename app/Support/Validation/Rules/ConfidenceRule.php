@@ -11,6 +11,9 @@ use App\Support\Validation\ValidationInput;
 /**
  * Si la IA no está segura de un campo clave, lo mira una persona. El umbral
  * se configura por cuenta: "alta" (lo más prudente) o "media".
+ *
+ * Los datos que confirma el QR de VERI*FACTU no se dudan: los puso el
+ * programa de facturación del emisor.
  */
 class ConfidenceRule implements Rule
 {
@@ -20,9 +23,10 @@ class ConfidenceRule implements Rule
     {
         $threshold = self::ORDER[$input->minConfidence->value];
         $failures = [];
+        $confirmed = $input->confirmedByQr();
 
         foreach ($input->confidence as $field => $level) {
-            if ((self::ORDER[$level] ?? 0) >= $threshold) {
+            if ((self::ORDER[$level] ?? 0) >= $threshold || in_array($field, $confirmed, true)) {
                 continue;
             }
 

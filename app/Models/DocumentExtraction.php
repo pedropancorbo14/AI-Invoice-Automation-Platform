@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property array<string, string> $confidence
  * @property list<array{field: string, note: string}> $notes
  * @property string $cost_usd
+ * @property array<string, mixed>|null $verifactu Lo que dice el QR de VERI*FACTU, si lo hay.
  */
 class DocumentExtraction extends Model
 {
@@ -31,6 +32,7 @@ class DocumentExtraction extends Model
     protected $fillable = [
         'account_id', 'model', 'input_mode', 'document_type', 'data', 'confidence', 'notes',
         'input_tokens', 'output_tokens', 'cache_write_tokens', 'cache_read_tokens', 'cost_usd', 'duration_ms',
+        'verifactu',
     ];
 
     protected function casts(): array
@@ -42,6 +44,7 @@ class DocumentExtraction extends Model
             'confidence' => 'array',
             'notes' => 'array',
             'cost_usd' => 'decimal:6',
+            'verifactu' => 'array',
         ];
     }
 

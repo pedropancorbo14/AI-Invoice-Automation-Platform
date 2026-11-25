@@ -3,10 +3,7 @@
 namespace App\Support\Extraction;
 
 use App\Support\Extraction\Exceptions\UnsupportedInput;
-use Illuminate\Support\Facades\File;
 use Smalot\PdfParser\Parser;
-use Symfony\Component\Process\ExecutableFinder;
-use Symfony\Component\Process\Process;
 use Throwable;
 
 /**
@@ -18,12 +15,14 @@ use Throwable;
  */
 class InputPreparer
 {
+    public function __construct(private readonly HeicConverter $heic = new HeicConverter) {}
+
     public function prepare(string $contents, string $mimeType, ?string $companyName = null, ?string $companyTaxId = null): ExtractionInput
     {
         [$mode, $content, $mediaType] = match ($mimeType) {
             'application/pdf' => $this->pdf($contents),
             'image/jpeg', 'image/png' => [InputMode::Image, ...$this->image($contents, $mimeType)],
-            'image/heic' => [InputMode::Image, ...$this->image($this->heicToJpeg($contents), 'image/jpeg')],
+            'image/heic' => [InputMode::Image, ...$this->image($this->heic->toJpeg($contents), 'image/jpeg')],
             default => throw new UnsupportedInput("No se puede leer automáticamente un documento de tipo {$mimeType}."),
         };
 
@@ -100,34 +99,5 @@ class InputPreparer
         imagejpeg($resized, null, 85);
 
         return [(string) ob_get_clean(), 'image/jpeg'];
-    }
-
-    /**
-     * Convierte HEIC a JPG con heif-convert (paquete libheif-examples, ya en la imagen Docker).
-     */
-    private function heicToJpeg(string $contents): string
-    {
-        $binary = (new ExecutableFinder)->find('heif-convert');
-
-        if ($binary === null) {
-            throw new UnsupportedInput('Las fotos HEIC necesitan heif-convert (libheif-examples) instalado en el servidor.');
-        }
-
-        $dir = sys_get_temp_dir().'/heic-'.bin2hex(random_bytes(6));
-        File::ensureDirectoryExists($dir);
-
-        try {
-            File::put("{$dir}/in.heic", $contents);
-            $process = new Process([$binary, '-q', '90', "{$dir}/in.heic", "{$dir}/out.jpg"]);
-            $process->setTimeout(60)->run();
-
-            if (! $process->isSuccessful() || ! File::exists("{$dir}/out.jpg")) {
-                throw new UnsupportedInput('No se pudo convertir la foto HEIC a JPG.');
-            }
-
-            return File::get("{$dir}/out.jpg");
-        } finally {
-            File::deleteDirectory($dir);
-        }
     }
 }

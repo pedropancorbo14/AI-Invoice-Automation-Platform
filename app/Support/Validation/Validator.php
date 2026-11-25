@@ -11,6 +11,7 @@ use App\Support\Validation\Rules\NewSupplierRule;
 use App\Support\Validation\Rules\RequiredFieldsRule;
 use App\Support\Validation\Rules\TaxIdRule;
 use App\Support\Validation\Rules\TaxRatesRule;
+use App\Support\Validation\Rules\VerifactuRule;
 
 /**
  * Aplica todas las reglas y devuelve los motivos por los que una factura no
@@ -30,6 +31,7 @@ class Validator
         TaxRatesRule::class,
         ArithmeticRule::class,
         DirectionRule::class,
+        VerifactuRule::class,
         ConfidenceRule::class,
     ];
 
