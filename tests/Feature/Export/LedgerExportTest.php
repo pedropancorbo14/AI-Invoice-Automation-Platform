@@ -66,20 +66,43 @@ it('generates a real Excel file with numeric amounts', function () {
     File::put($path, $response->getContent());
     $reader = new Reader;
     $reader->open($path);
-    $rows = [];
+    $sheets = [];
     foreach ($reader->getSheetIterator() as $sheet) {
         foreach ($sheet->getRowIterator() as $row) {
-            $rows[] = $row->toArray();
+            $sheets[$sheet->getName()][] = $row->toArray();
         }
     }
     $reader->close();
     @unlink($path);
 
-    expect($rows)->toHaveCount(5)
+    $rows = $sheets['Facturas'];
+    expect(array_keys($sheets))->toBe(['Facturas', 'Resumen IVA'])
+        ->and($rows)->toHaveCount(5)
         ->and($rows[0][0])->toBe('Fecha')
         ->and($rows[1][0])->toBe('31/10/2026')
         ->and($rows[1][6])->toEqual(100)
         ->and($rows[1][13])->toEqual(121);
+
+    // La hoja de resumen, buscando cada fila por su primera celda.
+    $summary = $sheets['Resumen IVA'];
+    $find = fn (string $start, int $from = 0) => collect($summary)->slice($from)->first(fn ($row) => str_starts_with((string) ($row[0] ?? ''), $start));
+    $receivedAt = collect($summary)->search(fn ($row) => ($row[0] ?? '') === 'IVA soportado (facturas recibidas)');
+
+    expect($summary[0][0])->toBe('Resumen de IVA · Panadería La Espiga S.L. · 4.º trimestre de 2026')
+        // Emitidas: la de noviembre. Recibidas: la de noviembre (dos tipos) y la del 31/10.
+        ->and($find('Total (1 factura)'))->toEqual(['Total (1 factura)', 100, 21, 0])
+        ->and($find('21 %', $receivedAt))->toEqual(['21 %', 200, 42, 0])
+        ->and($find('10 %', $receivedAt))->toEqual(['10 %', 1000, 100, 0])
+        ->and($find('Total (2 facturas)'))->toEqual(['Total (2 facturas)', 1200, 142, 0])
+        ->and($find('Resultado del 303'))->toEqual(['Resultado del 303 (estimado)', -121, 'A compensar o devolver'])
+        ->and($find('Practicadas a profesionales'))->toEqual(['Practicadas a profesionales (modelo 111)', 1100, 165, 1])
+        ->and($find('Hay 1 factura del periodo sin validar'))->not->toBeNull();
+});
+
+it('keeps the CSV to the invoices only, because it has no sheets', function () {
+    $content = $this->get("/api/companies/{$this->company->id}/export?period=2026-11&format=csv")->getContent();
+
+    expect($content)->not->toContain('Resumen de IVA');
 });
 
 it('emails the ledger with the file attached', function () {

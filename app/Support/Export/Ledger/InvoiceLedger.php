@@ -8,6 +8,7 @@ use App\Models\Document;
 use App\Support\Extraction\DocumentType;
 use App\Support\Money;
 use App\Support\Validation\Direction;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Libro de facturas de una empresa en un periodo: las facturas validadas (o
@@ -29,14 +30,7 @@ class InvoiceLedger
      */
     public function rows(Company $company, Period $period): array
     {
-        $documents = Document::withoutGlobalScopes()
-            ->where('company_id', $company->id)
-            ->whereIn('status', [DocumentStatus::Validated, DocumentStatus::Exported])
-            ->with(['latestExtraction', 'supplier'])
-            ->get()
-            ->filter(fn (Document $d) => $d->latestExtraction !== null
-                && $period->contains((string) ($d->latestExtraction->data['issue_date'] ?? '')))
-            ->sortBy(fn (Document $d) => ($d->latestExtraction?->data['issue_date'] ?? '').'|'.($d->latestExtraction?->data['invoice_number'] ?? ''));
+        $documents = $this->documents($company, $period);
 
         $rows = [];
 
@@ -72,6 +66,26 @@ class InvoiceLedger
         }
 
         return $rows;
+    }
+
+    /**
+     * Las facturas que cuentan en un periodo: validadas o ya exportadas, por
+     * fecha de emisión, ordenadas por fecha y número. El resumen de IVA usa
+     * esta misma selección para que cuadre con el libro.
+     *
+     * @return Collection<int, Document>
+     */
+    public function documents(Company $company, Period $period): Collection
+    {
+        return Document::withoutGlobalScopes()
+            ->where('company_id', $company->id)
+            ->whereIn('status', [DocumentStatus::Validated, DocumentStatus::Exported])
+            ->with(['latestExtraction', 'supplier'])
+            ->get()
+            ->filter(fn (Document $d) => $d->latestExtraction !== null
+                && $period->contains((string) ($d->latestExtraction->data['issue_date'] ?? '')))
+            ->sortBy(fn (Document $d) => ($d->latestExtraction?->data['issue_date'] ?? '').'|'.($d->latestExtraction?->data['invoice_number'] ?? ''))
+            ->values();
     }
 
     /** Columnas que son importes en céntimos. */

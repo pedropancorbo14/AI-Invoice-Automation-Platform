@@ -12,7 +12,7 @@ it('serves the panel for any of its routes', function (string $path) {
         ->assertOk()
         ->assertSee('id="panel"', false)
         ->assertSee('Ana Revisora');
-})->with(['/panel', '/panel/revisar', '/panel/revisar/12', '/panel/metricas', '/panel/exportar']);
+})->with(['/panel', '/panel/revisar', '/panel/revisar/12', '/panel/metricas', '/panel/exportar', '/panel/impuestos']);
 
 it('sends guests to the login page', function () {
     $this->get('/panel/revisar')->assertRedirect('/login');

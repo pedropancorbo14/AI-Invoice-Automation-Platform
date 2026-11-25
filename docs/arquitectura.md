@@ -187,6 +187,16 @@ VALIDATED → NEEDS_REVIEW   un destino la rechaza (clave caducada, datos...)
   recargo, IRPF, total, cuenta contable y categoría. El CSV va con `;` y coma
   decimal para el Excel en español. Se descarga o se envía por email desde el
   panel (**Exportar**) o con `php artisan invoices:export-ledger`.
+- **Resumen de IVA** por cliente y trimestre (panel, **Impuestos**): IVA
+  repercutido y soportado por tipo, recargo de equivalencia, retenciones de
+  IRPF practicadas (111) y soportadas (130) y el resultado estimado del 303.
+  Usa las mismas facturas que el libro (`InvoiceLedger::documents`), suma en
+  céntimos (`App\Support\Tax\VatSummary`) y avisa de las facturas del
+  periodo aún sin validar y de las que no están en euros, que no se suman.
+  El recargo soportado no resta. Es orientativo: sin prorrata,
+  regularizaciones, bienes de inversión ni inversión del sujeto pasivo.
+  El Excel del libro lo lleva también en una segunda hoja, «Resumen IVA»
+  (`VatSummarySheet`); el CSV solo lleva las facturas.
 - Nuevos destinos: implementar `App\Support\Export\ExportTarget` y añadirlo a
   `config('invoices.export.targets')`.
 
@@ -214,6 +224,7 @@ VALIDATED → NEEDS_REVIEW   un destino la rechaza (clave caducada, datos...)
 | POST | `/api/documents/{id}/file` | Adjuntar el fichero que faltaba y volver a extraer |
 | POST | `/api/documents/{id}/reprocess` | Volver a mandar a la IA un documento ignorado o fallido |
 | GET | `/api/companies/{id}/export?period=2026-T4&format=xlsx` | Libro de facturas del periodo (descarga) |
+| GET | `/api/companies/{id}/vat-summary?period=2026-T4` | Resumen de IVA y retenciones del periodo (importes como texto con 2 decimales) |
 | POST | `/api/companies/{id}/export/email` | Enviarlo por email (`period`, `format`, `email`) |
 | PUT / DELETE | `/api/companies/{id}/holded` | Conectar (`api_key`) o desconectar Holded (solo admin) |
 | GET | `/api/inbound-emails` | Correos recibidos (filtros: `status`, `company_id`) |

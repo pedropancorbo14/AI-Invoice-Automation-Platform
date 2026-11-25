@@ -5,6 +5,7 @@ import MetricsView from './views/MetricsView.vue';
 import ExportView from './views/ExportView.vue';
 import DocumentsView from './views/DocumentsView.vue';
 import UploadView from './views/UploadView.vue';
+import TaxesView from './views/TaxesView.vue';
 
 // El título de la pestaña lo pone App.vue (con el número de pendientes).
 export const router = createRouter({
@@ -16,6 +17,7 @@ export const router = createRouter({
         { path: '/facturas', name: 'documents', component: DocumentsView, meta: { title: 'Facturas' } },
         { path: '/subir', name: 'upload', component: UploadView, meta: { title: 'Subir facturas' } },
         { path: '/metricas', name: 'metrics', component: MetricsView, meta: { title: 'Métricas' } },
+        { path: '/impuestos', name: 'taxes', component: TaxesView, meta: { title: 'Impuestos' } },
         { path: '/exportar', name: 'export', component: ExportView, meta: { title: 'Exportar' } },
         { path: '/:pathMatch(.*)*', redirect: '/revisar' },
     ],
